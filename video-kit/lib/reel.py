@@ -259,6 +259,7 @@ class Reel:
             self.tap(tt + 0.25, "next")
             self.phone["steps"].append({"t": round(tt + 0.45, 3), "set": {"screen": "today", "scroll": 0, "caret": None}})
             self.s("ding", tt + 0.5, 0.025)
+            self.el(tt + 0.5, D + 1, "Example plan shown", "chip sm white", 335, inn="fade", out="none")
         elif kind == "week":
             self.phone_seq(tp, steps=[{"t": 0, "set": {"screen": "week", "done": 2}}], lift=t0 + span)
             self.tap(tp + 1.5, "rows.2")
@@ -270,6 +271,18 @@ class Reel:
             self.phone["steps"].append({"t": round(tp + 1.3, 3), "set": {"grade": g}})
             self.tap(tp + 2.0, "next")
             self.phone["steps"].append({"t": round(tp + 2.2, 3), "set": {"screen": "form", "step": 1, "composer": "", "title": "", "caret": "composer"}})
+            comp, title = self.meta.get("form", ("Petzold", "Minuet in G"))
+            tt = tp + 2.5
+            for i in range(1, len(comp) + 1):
+                self.phone["steps"].append({"t": round(tt, 3), "set": {"composer": comp[:i]}}); tt += 0.055
+            self.phone["steps"].append({"t": round(tt + 0.08, 3), "set": {"caret": "title"}}); tt += 0.18
+            for i in range(1, len(title) + 1):
+                self.phone["steps"].append({"t": round(tt, 3), "set": {"title": title[:i]}}); tt += 0.05
+            self.s("typing", tp + 2.5, 0.03, d=tt - tp - 2.5)
+            self.tap(tt + 0.25, "next")
+            self.phone["steps"].append({"t": round(tt + 0.45, 3), "set": {"screen": "today", "scroll": 0, "caret": None}})
+            self.s("ding", tt + 0.5, 0.025)
+            self.el(tt + 0.5, D + 1, "Example plan shown", "chip sm white", 335, inn="fade", out="none")
         if bed:
             self.bed((bed_from if bed_from is not None else t0) - 0.05, D, 96, [("A2", ["C4", "E4", "A4"]), ("F2", ["C4", "F4", "A4"]), ("C3", ["E4", "G4", "C5"]), ("G2", ["D4", "G4", "B4"])], vel=0.27, kgain=0.08, hgain=0.02)
         self.lower_third(t0 + span)

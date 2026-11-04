@@ -429,6 +429,7 @@ def returner(name="i3-adult-returner"):
     rh, lh, bpm = MG_RH, MG_LH, MG_BPM
     R = Reel(name, 27.2, glow="rgba(120,170,255,0.22)", fit_end=True)
     R.meta["grade"] = 3
+    R.meta["form"] = ("Petzold", "Minuet in G")
     R.cap(0, 6.6, "Played piano as a kid?<br><g>Come back</g> without starting over.", y=120, cls="cap xs")
     # halting, rusty version (blue)
     rusty = R.play(cut(rh, 24), bpm * 0.72, 0.2, sec="rusty", hand="L", vel=0.55)
