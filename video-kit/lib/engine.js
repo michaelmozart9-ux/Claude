@@ -196,7 +196,7 @@ function uiEl(E, t) {
   if (E.o.style.display !== "flex") E.o.style.display = "flex";
   const a = t - e.t0; let op = 1, sc = 1, ty = 0, tx = 0, rot = 0;
   const kin = clamp(a / tin);
-  switch (e.in ?? "pop") {
+  switch (e.t0 <= 0.001 ? "none" : (e.in ?? "pop")) {
     case "pop": sc = lerp(0.6, 1, back(kin)); op = clamp(a / 0.12); break;
     case "fade": op = ease(kin); break;
     case "up": ty = lerp(60, 0, ease(kin)); op = ease(kin); break;
@@ -344,13 +344,12 @@ function updatePhone(t) {
   const st = { screen: "today" }; let tapT = null, tapXY = null;
   for (const s of PH.steps ?? []) if (t >= s.t) Object.assign(st, s.set ?? {});
   for (const tp of PH.taps ?? []) if (t >= tp.t && t < tp.t + 0.45) { tapT = tp.t; tapXY = tp.at; }
-  if (st.metroT0 !== undefined && st.bpm && t >= st.metroT0) st.beat = (((t - st.metroT0) * st.bpm) / 60) % 1;
-  if (st.countdown) { const [t0, from] = st.countdown; st.remain = Math.max(0, from - (t - t0) * (st.speedup ?? 1)); delete st.countdown; }
+  if (st.metroT0 !== undefined && st.bpm && t >= st.metroT0) st.beat = Math.floor(((((t - st.metroT0) * st.bpm) / 60) % 1) * 4) / 4;
+  if (st.countdown) { const [t0, from] = st.countdown; st.remain = Math.floor(Math.max(0, from - (t - t0) * (st.speedup ?? 1))); delete st.countdown; }
   if (st.scrollTo) { const [t0, t1, a0, a1] = st.scrollTo; st.scroll = Math.round(lerp(a0, a1, easeIO((t - t0) / (t1 - t0)))); delete st.scrollTo; }
   if (st.toastAt) { const ta = t - st.toastAt[0]; st.toast = ta >= 0 ? [st.toastAt[1], clamp(ta / 0.2) * (1 - clamp((ta - 1.6) / 0.3))] : null; if (!st.toast || st.toast[1] <= 0) delete st.toast; delete st.toastAt; }
   delete st.t; delete st.metroT0;
-  let anchors = phone.anchorsFor({ ...st, tap: null });
-  if (tapT !== null) { const p = resolveAnchor(tapXY, anchors); if (p) st.tap = [p[0], p[1], +(t - tapT).toFixed(2)]; }
+  if (tapT !== null) { const anchors = phone.anchorsFor({ ...st, tap: null }); const p = resolveAnchor(tapXY, anchors); if (p) st.tap = [p[0], p[1], +(t - tapT).toFixed(2)]; }
   phone.draw(st);
 }
 function resolveAnchor(at, A) {

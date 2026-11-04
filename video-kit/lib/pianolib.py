@@ -155,12 +155,12 @@ def reverb(x, wet=0.2, rt=1.9, seed=3):
     return out
 
 
-def master(mix, dur, path, peak=0.89):
+def master(mix, dur, path, peak=0.84):
     y = mix[: int(dur * SR)].copy()
     ref = np.percentile(np.abs(y), 99.95) + 1e-9
     y *= peak / ref
-    over = np.abs(y) > 0.8
-    y[over] = np.sign(y[over]) * (0.8 + 0.2 * np.tanh((np.abs(y[over]) - 0.8) / 0.2))
+    over = np.abs(y) > 0.74
+    y[over] = np.sign(y[over]) * (0.74 + 0.2 * np.tanh((np.abs(y[over]) - 0.74) / 0.2))
     fade = int(0.04 * SR)
     y[-fade:] *= np.linspace(1, 0, fade)[:, None]
     sf.write(path, y, SR, subtype="PCM_16")

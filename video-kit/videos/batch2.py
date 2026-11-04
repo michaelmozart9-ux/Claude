@@ -37,9 +37,9 @@ if want("d3"):
 # ---------- E: sounds harder / easier ----------
 if want("e1"):
     brh, blh = BACHC(2)
-    grh, glh = GYM(8); grh, glh = window(grh, 7, 13), window(glh, 6, 13)
+    grh, glh = GYM(8); grh, glh = window(grh, 7, 17), window(glh, 6, 17)
     grh = at(grh, 1)
-    mrh, mlh = ML1(1, mel=False)
+    mrh, mlh = ML1(2, mel=False)
     harder("e1-sounds-harder", [
         ("Bach · Prelude in C", brh, blh, 300, 24, "Grade 8", "around Grade 4–5"),
         ("Satie · Gymnopédie No. 1", grh, glh, GYM_BPM, 7, "Grade 8", "around Grade 4"),

@@ -35,7 +35,7 @@ def week_card(R, w, lo, hi, hands, focus, ms, keys):
     items = [
         {"t": "text", "x": 0.2, "y": 0.38, "text": f"WEEK {w}", "size": 0.16, "weight": 800, "color": "#F2C46B", "ls": 6},
         {"t": "text", "x": 2.1, "y": 0.38, "text": "of 6", "size": 0.13, "weight": 700, "color": "rgba(255,255,255,.5)", "align": "right"},
-        {"t": "text", "x": 0.2, "y": 1.0, "text": f"{lo}–{hi}%", "size": 0.5, "weight": 900, "color": "#FFFFFF"},
+        {"t": "text", "x": 0.2, "y": 0.98, "text": f"{lo}–{hi}%", "size": 0.41, "weight": 900, "color": "#FFFFFF"},
         {"t": "text", "x": 0.2, "y": 1.22, "text": "tempo target", "size": 0.12, "weight": 700, "color": "rgba(255,255,255,.55)"},
         {"t": "rect", "x": 0.2, "y": 1.36, "w": 1.9, "h": 0.12, "r": 0.06, "color": "rgba(255,255,255,.1)"},
         {"t": "rect", "x": 0.2 + 1.9 * lo / 100, "y": 1.36, "w": 1.9 * (hi - lo) / 100, "h": 0.12, "r": 0.06, "color": "#F2C46B"},
@@ -88,7 +88,7 @@ def plan6(name="f1-ai-planned-6-weeks"):
         R.s("pop", tc + 0.15 + i * 0.17, 0.035, freq=700 + 120 * i)
     R.confetti(tc + 1.3, y=900, n=200)
     R.s("ding", tc + 1.3, 0.035)
-    R.cap(tc + 2.85, tc + 4.3, "It also said Clair de Lune<br>is a <g>stretch</g> at Grade 6. Honest.", y=600, cls="cap xs", inn="pop")
+    R.cap(tc + 3.0, tc + 4.3, "It also said Clair de Lune<br>is a <g>stretch</g> at Grade 6. Honest.", y=600, cls="cap xs", inn="pop")
     R.outro(tc + 4.4, ["What to play. <g>How fast.</g>", "How long. <g>Every session.</g>"], kind="today", bed=False)
     R.bed(0, dur, 72, DB_BED, vel=0.26, kgain=0.0, hgain=0.0, arp=True, mixgain=0.9)
     R.build()
@@ -118,6 +118,7 @@ def bar_one(name="g1-stop-bar-one"):
             R.s("scratch", t - 0.25, 0.04)
         t = tm + 0.55
     R.el(t, t + 2.2, "Bar 1: played <r>3×</r><br>The hard bar: <r>0×</r> clean", "card red stat", y=640, inn="pop")
+    R.pad(t, ["C3", "G3", "E4"], hold=2.2, vel=0.3)
     R.illus(t, t + 2.2)
     R.s("pop", t, 0.04)
     t += 2.3
@@ -152,7 +153,7 @@ def bar_one(name="g1-stop-bar-one"):
     t = fin + 1.0
     R.cap(t, t + 1.5, "Which bar do <g>you</g><br>always restart from? 👇", y=600, cls="cap s", inn="slam")
     R.dim(t - 0.1, t + 1.5, 0.6)
-    R.outro(t + 1.55, ["So I built something that", "picks the section <g>for</g> you.", "Which bar. Which hands. <g>What tempo.</g>"], kind="today")
+    R.outro(t + 1.55, ["So I built something that", "picks the section <g>for</g> you.", "Which bar. Which hands. <g>What tempo.</g>"], kind="today", bed_from=t)
     R.build()
 
 
@@ -205,7 +206,7 @@ def hands_sep(name="g2-hands-separate"):
     R.sub(t + 0.1, t + 2.3, "That's what the example plan does 👆", y=820, cls="sub s", inn="fade")
     R.dim(t - 0.1, t + 2.3, 0.6)
     R.s("pop", t, 0.04)
-    R.outro(t + 2.35, ["You pick the piece.", "It decides <g>which hands, which day</g>."], kind="week")
+    R.outro(t + 2.35, ["You pick the piece.", "It decides <g>which hands, which day</g>."], kind="week", bed_from=t)
     R.build()
 
 
@@ -213,7 +214,7 @@ def hands_sep(name="g2-hands-separate"):
 def chunks(name="g3-chunk-it"):
     run, lh, bpm = BB_RUN, BB_LH, BB_BPM
     R = Reel(name, 29.0, fit_end=True)
-    R.cap(0, 3.6, "Fast passage<br><r>falling apart</r>? 😵", y=120, cls="cap s")
+    R.cap(0, 0.15 + 20 * 60 / bpm + 0.85, "Fast passage<br><r>falling apart</r>? 😵", y=120, cls="cap s")
     ns = R.play(cut(run, 20), bpm, 0.15, sec="fail", hand="R", human=0.02)
     ns += R.play(cut(lh, 20), bpm, 0.15, sec="fail", hand="L", vel=0.5)
     tcr = 0.15 + 20 * 60 / bpm
@@ -273,7 +274,7 @@ def chunks(name="g3-chunk-it"):
     t = fin + 1.0
     R.cap(t, t + 1.5, "What passage do <g>you</g><br>need to chunk? 👇", y=600, cls="cap s", inn="slam")
     R.dim(t - 0.1, t + 1.5, 0.6)
-    R.outro(t + 1.55, ["So I built something that", "gives you <g>one section</g> per session.", "With a <g>tempo target</g>."], kind="today")
+    R.outro(t + 1.55, ["So I built something that", "gives you <g>one section</g> per session.", "With a <g>tempo target</g>."], kind="today", bed_from=t)
     R.build()
 
 
@@ -314,7 +315,7 @@ def speed_test(name="h1-hanon-speed-test"):
     R.dim(t - 0.1, t + 4.3, 0.6)
     R.s("pop", t, 0.04)
     R.cap(t + 2.85, t + 4.3, "Where did <g>you</g> crash? 👇", y=600, cls="cap s", inn="slam")
-    R.outro(t + 4.35, ["After every session:", "Too hard / Just right / <g>Too easy</g>."], kind="checkin")
+    R.outro(t + 4.35, ["After every session:", "Too hard / Just right / <g>Too easy</g>."], kind="checkin", bed_from=t)
     R.build()
 
 
@@ -342,6 +343,7 @@ def pov_kid(name="i1-pov-kid-practising"):
         t = tm + 0.5
     R.illus(0.3, t)
     R.cap(t, t + 1.7, "Same 4 bars.<br><r>Same mistake.</r>", y=560, cls="cap", inn="slam")
+    R.pad(t, ["A2", "E3", "A3", "C4"], hold=5.0, vel=0.28)
     R.dim(t - 0.1, t + 5.0, 0.6)
     R.s("boom", t, 0.06)
     t += 1.75
@@ -463,7 +465,7 @@ def returner(name="i3-adult-returner"):
     t = t + 24 * 60 / bpm + 0.35
     R.cap(t, t + 1.6, "What did you play<br>as a kid? 👇", y=600, cls="cap s", inn="slam")
     R.dim(t - 0.1, t + 1.6, 0.6)
-    R.outro(t + 1.65, ["Pick your grade. Pick your piece.", "It plans <g>6 weeks</g> from there."], kind="grade")
+    R.outro(t + 1.65, ["Pick your grade. Pick your piece.", "It plans <g>6 weeks</g> from there."], kind="grade", bed_from=t)
     R.build()
 
 
@@ -528,6 +530,7 @@ def thirty_min(name="k1-30-minutes"):
     R.illus(0.3, t)
     t = 5.8
     R.cap(t, t + 1.4, "With a plan:", y=120, cls="cap")
+    R.pad(t - 0.2, ["A2", "E3", "C4", "E4"], hold=1.6, vel=0.3)
     R.s("whoosh", t - 0.1, 0.014)
 
     def segbar(on):
@@ -570,5 +573,5 @@ def thirty_min(name="k1-30-minutes"):
     t = fin + 0.6
     R.cap(t, t + 1.5, "Which part do<br>you <g>skip</g>? 👇", y=600, cls="cap", inn="slam")
     R.dim(t - 0.1, t + 1.5, 0.6)
-    R.outro(t + 1.55, ["Every session, timed for you.", "Warm-up. <g>Main work.</g> Run-through."], kind="today")
+    R.outro(t + 1.55, ["Every session, timed for you.", "Warm-up. <g>Main work.</g> Run-through."], kind="today", bed_from=t)
     R.build()

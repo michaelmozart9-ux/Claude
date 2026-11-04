@@ -23,6 +23,21 @@ export const SESSION = {
   why: "Naming landmarks out loud forces your eyes and brain to register where the hand is going before it moves, which is the real fix for losing your place.",
   milestone: "Play the left hand alone for the opening theme with no hesitation, naming each landmark position out loud as you shift.",
 };
+export const SESSION3 = {
+  eyebrow: "WEEK 1 · SESSION 3 OF 5",
+  piece: "Debussy — Clair de Lune",
+  section: "Opening theme, first 8 bars",
+  hands: "Right hand",
+  tempo: "50% tempo · 45 BPM",
+  bpm: 45,
+  segments: [
+    { name: "Warm-up", minutes: 5, instruction: "Slow legato scale (Db major) focusing on even finger weight and singing tone." },
+    { name: "Main work", minutes: 20, instruction: "Practice right-hand melody alone, shaping phrases with a slight swell toward the top note of each phrase, keeping tempo steady." },
+    { name: "Run-through", minutes: 5, instruction: "Play right hand alone through the full 8 bars, listening for a singing legato line." },
+  ],
+  why: "Giving the melody dedicated attention now means it won't compete for focus once the left hand's landmarks are added back in.",
+  milestone: SESSION.milestone,
+};
 export const WEEK1 = [
   ["Day 1", "Left hand", 40], ["Day 2", "Left hand", 40], ["Day 3", "Right hand", 50], ["Day 4", "Left hand", 45], ["Day 5", "Left hand", 50],
 ];
@@ -56,7 +71,7 @@ function playIcon(g, cx, cy, s, col) { g.fillStyle = col; g.beginPath(); g.moveT
 
 // Draws the full (tall) Today page. Returns layout anchors for taps.
 function drawToday(g, st, PH) {
-  const S = SESSION, X = 44, CW = W - 2 * X; const A = {};
+  const S = st.session === 3 ? SESSION3 : SESSION, X = 44, CW = W - 2 * X; const A = {};
   g.fillStyle = C.bg; g.fillRect(0, 0, W, PH);
   const grd = g.createRadialGradient(W * 0.5, 0, 10, W * 0.5, 0, 700); grd.addColorStop(0, "rgba(219,181,104,0.10)"); grd.addColorStop(1, "rgba(219,181,104,0)"); g.fillStyle = grd; g.fillRect(0, 0, W, 800);
   let y = 150;
@@ -106,7 +121,7 @@ function drawToday(g, st, PH) {
   rr(g, X, y, CW, 150, 18); g.fillStyle = C.goldSoft; g.fill(); g.strokeStyle = C.goldLine; g.lineWidth = 2; g.stroke();
   g.fillStyle = C.gold; g.font = F(600, 22); g.fillText("This week's milestone ·", X + 64, y + 44);
   g.strokeStyle = C.gold; g.lineWidth = 3; g.beginPath(); g.arc(X + 34, y + 37, 12, 0, 7); g.stroke(); g.beginPath(); g.arc(X + 34, y + 37, 4, 0, 7); g.stroke();
-  g.fillStyle = C.fg; g.font = F(400, 21); para(g, SESSION.milestone, X + 64, y + 76, CW - 90, 29, 3);
+  g.fillStyle = C.fg; g.font = F(400, 21); para(g, S.milestone, X + 64, y + 76, CW - 90, 29, 3);
   y += 150 + 36;
   if (st.phase === "checkin" || st.phase === "rated") {
     rr(g, X, y, CW, 470, 18); g.fillStyle = C.card; g.fill(); g.strokeStyle = C.border; g.lineWidth = 2; g.stroke();
@@ -239,6 +254,7 @@ export function makePhone() {
   }
   function setOpacity(o) { for (const m of [frame, body, screen, back, logo]) m.material.opacity = o; }
   // precompute anchors without displaying
-  function anchorsFor(st) { const save = lastKey; const a = draw(st); lastKey = ""; return a; }
+  let aKey = "", aCache = {};
+  function anchorsFor(st) { const k = JSON.stringify(st); if (k === aKey) return aCache; const a = draw(st); aKey = k; aCache = a; return a; }
   return { group, draw, setOpacity, anchorsFor, W, H };
 }

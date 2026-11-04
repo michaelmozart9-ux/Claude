@@ -136,7 +136,7 @@ def grades(name, title, levels, hook=None, sub="(wait for Grade 8 🤯)", outro_
     R.cap(t, t + 1.4, "Which grade<br>are <g>you</g>? 👇", y=600, cls="cap", inn="slam")
     R.dim(t - 0.1, t + 1.4, 0.6)
     R.s("whoosh", t - 0.1, 0.014)
-    R.outro(t + 1.45, outro_lines or ["Whatever grade you're at,", "it plans <g>6 weeks</g> for it."], kind="form" if form else "today")
+    R.outro(t + 1.45, outro_lines or ["Whatever grade you're at,", "it plans <g>6 weeks</g> for it."], kind="form" if form else "today", bed_from=t)
     R.build()
     return R
 
@@ -190,9 +190,11 @@ def therapy(name, calm, mistake_at, wrong, fix_seq, fix_lh, fix_bpm, piece_lbl, 
     R.frame(t, lo - 6, hi + 6, e="o", zoom=0.9)
     # calm down + fix
     t = t + 2.75
+    R.pad(t - 0.5, ["A2", "E3", "C4", "E4"], hold=1.4, vel=0.3)
     R.cap(t, t + 1.9, "Fix the bar,<br><g>not your mood</g>.", y=130, cls="cap s")
     R.s("whoosh", t - 0.1, 0.012)
     t += 0.5
+    fix0 = t
     for k, (pct, col) in enumerate(zip(pcts, ["blue", "", "solid"])):
         b = fix_bpm * pct / 100
         L = max(span(fix_seq), span(fix_lh) if fix_lh else 0) * 60 / b
@@ -202,8 +204,6 @@ def therapy(name, calm, mistake_at, wrong, fix_seq, fix_lh, fix_bpm, piece_lbl, 
         R.chip(t, t + L + 0.1, f"{pct}% tempo", y=440, kind=col)
         if k:
             R.s("whoosh", t - 0.1, 0.01)
-        if k == 0:
-            R.cap(t + 1.4, t + L + 0.1 + 2 * L, "Loop the bar<br>that broke. <g>Slowly.</g>", y=130, cls="cap s")
         if k == 2:
             fin = t + L - 0.05
             R.confetti(fin, y=700, n=220)
@@ -212,7 +212,8 @@ def therapy(name, calm, mistake_at, wrong, fix_seq, fix_lh, fix_bpm, piece_lbl, 
             R.flash(fin, 0.3, 0.3)
             R.chip(fin, fin + 1.2, "Clean ✅", y=560, kind="solid big")
         t += L + 0.25
-    R.outro(t + 0.8, ["So I built something that", "plans <g>that bar</g> for you.", "Which section. Which hands. <g>What tempo.</g>"], kind="today")
+    R.cap(fix0 + 1.4, t - 0.1, "Loop the bar<br>that broke. <g>Slowly.</g>", y=130, cls="cap s")
+    R.outro(t + 0.8, ["So I built something that", "plans <g>that bar</g> for you.", "Which section. Which hands. <g>What tempo.</g>"], kind="today", bed_from=t)
     R.build()
     return R
 
@@ -257,7 +258,7 @@ def pedal(name, clip, piece_lbl, three=True, hook=None, units=None):
     R.cap(t - 0.1, t + 1.5, "Which one sounds<br><g>right</g> to you? 👇", y=600, cls="cap", inn="slam")
     R.dim(t - 0.2, t + 1.5, 0.6)
     R.s("boom", t - 0.08, 0.06)
-    R.outro(t + 1.55, ["Pedal is <g>one</g> detail.", "So I built something that tells you <g>what to work on</g>."], kind="today")
+    R.outro(t + 1.55, ["Pedal is <g>one</g> detail.", "So I built something that tells you <g>what to work on</g>."], kind="today", bed_from=t)
     R.build()
     return R
 
@@ -272,7 +273,7 @@ def harder(name, items, hook, outro_lines, form, comment, reverse=False):
     R.meta["form"] = form
     R.cap(0, 2.2, hook, y=120, cls="cap s")
     for k, ((lab, rh, lh, bpm, u, sounds, actually), L) in enumerate(zip(items, lens)):
-        ns, _ = play_clip(R, rh, lh, bpm, t, f"h{k}", units=u, t1=t + L + 1.7)
+        ns, _ = play_clip(R, rh, lh, bpm, t, f"h{k}", units=u + 1.8 * bpm / 60, t1=t + L + 1.75)
         lo, hi = rng(ns)
         R.frame(t, lo, hi, e="cut" if k else "io", zoom=1.05)
         R.frame(t + L + 1.6, lo, hi, zoom=1.22, side=0.5 * (1 if k % 2 else -1))
@@ -294,6 +295,6 @@ def harder(name, items, hook, outro_lines, form, comment, reverse=False):
     R.cap(t - 0.1, t + 1.5, comment, y=600, cls="cap", inn="slam")
     R.dim(t - 0.2, t + 1.5, 0.6)
     R.illus(0.4, t + 1.5, text="Grades are approximate")
-    R.outro(t + 1.55, outro_lines, kind="form")
+    R.outro(t + 1.55, outro_lines, kind="form", bed_from=t)
     R.build()
     return R

@@ -177,6 +177,10 @@ class Reel:
     def bed(self, t0, t1, bpm, chords, **kw):
         self.beds.append((t0, t1, bpm, chords, kw))
 
+    def pad(self, t, notes, hold=1.6, vel=0.32):
+        """soft hidden sustained chord to avoid dead air under talky moments"""
+        return self.chord_hit(t, notes, hold=hold, vel=vel, sec="_pad", show=False)
+
     def chord_hit(self, t, notes, hold=1.5, vel=0.75, h="R", sec="s", show=True):
         ns = [{"m": P(n), "t": round(t, 4), "d": hold, "v": vel, "h": h, "sec": sec} for n in notes]
         if not show:
@@ -202,7 +206,7 @@ class Reel:
         self.s("tap", t, 0.05)
         self.s("pop", t + 0.04, 0.03, freq=1500)
 
-    def outro(self, t0, lines=None, kind="today", bed=True, lt_after=3.0, dim=True):
+    def outro(self, t0, lines=None, kind="today", bed=True, lt_after=3.0, dim=True, bed_from=None):
         """Standard soft product moment: captions + phone with the real Today screen + lower third."""
         lines = lines or ["So I built something that <g>tells you</g>.", "What to play. <g>How fast.</g> How long."]
         self.dur = round(t0 + 6.5, 2) if self.opts.get("fit_end") else round(max(self.dur, t0 + 6.4), 2)
@@ -250,7 +254,7 @@ class Reel:
         elif kind == "week":
             self.phone_seq(tp, steps=[{"t": 0, "set": {"screen": "week", "done": 2}}], lift=t0 + span)
             self.tap(tp + 1.5, "rows.2")
-            self.phone["steps"].append({"t": round(tp + 1.75, 3), "set": {"screen": "today", "scroll": 0}})
+            self.phone["steps"].append({"t": round(tp + 1.75, 3), "set": {"screen": "today", "scroll": 0, "session": 3}})
         elif kind == "grade":
             g = self.meta.get("grade", 3)
             self.phone_seq(tp, steps=[{"t": 0, "set": {"screen": "form", "step": 0, "grade": None}}], lift=t0 + span)
@@ -259,7 +263,7 @@ class Reel:
             self.tap(tp + 2.0, "next")
             self.phone["steps"].append({"t": round(tp + 2.2, 3), "set": {"screen": "form", "step": 1, "composer": "", "title": "", "caret": "composer"}})
         if bed:
-            self.bed(t0 - 0.05, D, 96, [("A2", ["C4", "E4", "A4"]), ("F2", ["C4", "F4", "A4"]), ("C3", ["E4", "G4", "C5"]), ("G2", ["D4", "G4", "B4"])], vel=0.27, kgain=0.08, hgain=0.02)
+            self.bed((bed_from if bed_from is not None else t0) - 0.05, D, 96, [("A2", ["C4", "E4", "A4"]), ("F2", ["C4", "F4", "A4"]), ("C3", ["E4", "G4", "C5"]), ("G2", ["D4", "G4", "B4"])], vel=0.27, kgain=0.08, hgain=0.02)
         self.lower_third(t0 + span)
 
     # ---- build ----
