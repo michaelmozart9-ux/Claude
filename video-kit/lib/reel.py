@@ -1,5 +1,5 @@
 """Authoring helper: a Reel collects notes, camera, captions, fx and phone steps, then writes audio.wav + timing.json."""
-import os, sys, json, numpy as np
+import os, sys, json, re, numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pianolib import *
 import sfx as SFX
@@ -208,7 +208,15 @@ class Reel:
 
     def outro(self, t0, lines=None, kind="today", bed=True, lt_after=3.0, dim=True, bed_from=None):
         """Standard soft product moment: captions + phone with the real Today screen + lower third."""
-        lines = lines or ["So I built something that <g>tells you</g>.", "What to play. <g>How fast.</g> How long."]
+        lines = list(lines or ["So I built something that <g>tells you</g>.", "What to play. <g>How fast.</g> How long."])
+        # merge an unfinished line with the next one so no caption is a fragment
+        merged = []
+        for ln in lines:
+            if merged and not re.sub(r"<[^>]+>", "", merged[-1]).rstrip().endswith((".", "?", "!", ":", "…", "👇")):
+                merged[-1] = merged[-1] + "<br>" + ln
+            else:
+                merged.append(ln)
+        lines = merged
         self.dur = round(t0 + 6.5, 2) if self.opts.get("fit_end") else round(max(self.dur, t0 + 6.4), 2)
         D = self.dur
         if dim:

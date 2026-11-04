@@ -274,7 +274,7 @@ def chunks(name="g3-chunk-it"):
     t = fin + 1.0
     R.cap(t, t + 1.5, "What passage do <g>you</g><br>need to chunk? 👇", y=600, cls="cap s", inn="slam")
     R.dim(t - 0.1, t + 1.5, 0.6)
-    R.outro(t + 1.55, ["So I built something that", "gives you <g>one section</g> per session.", "With a <g>tempo target</g>."], kind="today", bed_from=t)
+    R.outro(t + 1.55, ["So I built something that", "picks <g>one section</g> for you.", "With a <g>tempo target</g>."], kind="today", bed_from=t)
     R.build()
 
 
