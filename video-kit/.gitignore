@@ -1,0 +1,7 @@
+node_modules/
+assets/wav/
+videos/*/frames/
+videos/*/test/
+videos/*/audio.wav
+videos/_smoke/
+logs/

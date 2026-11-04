@@ -1,0 +1,12 @@
+{
+  "name": "between-lessons-video-kit",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@audio-samples/piano-mp3-velocity12": "1.0.5",
+    "@audio-samples/piano-mp3-velocity4": "1.0.5",
+    "@audio-samples/piano-mp3-velocity8": "1.0.5",
+    "geist": "^1.3.1",
+    "three": "0.160.0"
+  }
+}
