@@ -12,6 +12,8 @@ Credit line (required by the piano-sample licence, CC BY 3.0). Put it in the You
 3. **Gemini vs Claude.** Your site says plans are written by Google's Gemini, but CLAUDE.md says Anthropic's Claude. The videos just say "AI", so fix whichever is wrong.
 4. **Christmas videos (a2, b1, d3): post from mid-November.**
 5. **Best for the €16 paid test (adult/parent-targeted):** i1, i2, i3, j1, k1.
+6. **The phone always shows the real example plan (Clair de Lune, Week 1).** Even when a video types in another piece, the screen after it is the example. a2, b1, b2 and i3 label it "Example plan shown". The earlier renders (a1, a3, b3, e1, e2) don't have the label; tell me if you want them re-rendered with it (about 6 min each).
+7. **Space out same-format videos.** Don't post c1/c2/c3 or d1/d2/d3 on the same day.
 
 ## Batch table
 
