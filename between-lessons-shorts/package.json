@@ -1,0 +1,11 @@
+{
+  "name": "piano-video-kit",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "three": "0.170.0",
+    "playwright": "^1.48.0",
+    "@fontsource/inter": "^5.1.0",
+    "@fontsource/cormorant-garamond": "^5.1.0"
+  }
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+@font-face { font-family: "Inter"; font-weight: 900; src: url("/node_modules/@fontsource/inter/files/inter-latin-900-normal.woff2") format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+20AC; }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("/node_modules/@fontsource/inter/files/inter-latin-800-normal.woff2") format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+20AC; }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("/node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2") format("woff2"); unicode-range: U+0000-00FF, U+2000-206F, U+20AC; }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("/node_modules/@fontsource/inter/files/inter-latin-ext-900-normal.woff2") format("woff2"); unicode-range: U+0100-024F; }
+@font-face { font-family: "Inter"; font-weight: 800; src: url("/node_modules/@fontsource/inter/files/inter-latin-ext-800-normal.woff2") format("woff2"); unicode-range: U+0100-024F; }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("/node_modules/@fontsource/inter/files/inter-latin-ext-700-normal.woff2") format("woff2"); unicode-range: U+0100-024F; }
+@font-face { font-family: "Cormorant"; font-weight: 700; src: url("/node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-700-normal.woff2") format("woff2"); }
+html, body { margin: 0; background: #0E0C0A; }
+#stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0E0C0A; font-family: "Inter", "Noto Color Emoji"; }
+#gl { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+#topfade { position: absolute; left: 0; right: 0; top: 0; height: 780px; background: linear-gradient(#0E0C0A 0%, rgba(14,12,10,.97) 56%, rgba(14,12,10,0) 100%); }
+#vig { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 55%, rgba(0,0,0,.6) 100%); }
+#dim { position: absolute; inset: 0; background: #0E0C0A; opacity: 0; }
+#red { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(255,40,40,0) 35%, rgba(255,40,40,.55) 100%); opacity: 0; }
+#flash { position: absolute; inset: 0; background: #FFF4DC; opacity: 0; }
+.hl { color: #E0A84B; } .bad { color: #FF5A4E; } .good { color: #7EE08A; } .em { font-family: "Noto Color Emoji"; font-weight: 400; }
+.big { position: absolute; top: 200px; left: 40px; right: 40px; text-align: center; font-weight: 900; font-size: 98px; line-height: 1.06; color: #F5EEDC; text-shadow: 0 6px 26px rgba(0,0,0,.85); opacity: 0; }
+#sub, #end2 { position: absolute; top: 470px; left: 50px; right: 50px; text-align: center; font-weight: 800; font-size: 52px; line-height: 1.2; color: #E9DCC0; text-shadow: 0 4px 18px rgba(0,0,0,.9); opacity: 0; }
+#end2 { top: 480px; }
+#tag { position: absolute; top: 600px; left: 0; right: 0; text-align: center; opacity: 0; }
+#tag span { display: inline-block; padding: 14px 34px; border-radius: 999px; background: rgba(22,17,13,.9); border: 3px solid #5A4A38; color: #F5EEDC; font-weight: 800; font-size: 40px; letter-spacing: .06em; }
+#card { position: absolute; top: 150px; left: 0; right: 0; text-align: center; opacity: 0; }
+#card .lab { font-weight: 800; font-size: 46px; letter-spacing: .32em; color: #E0A84B; padding-left: .32em; }
+#card .num { font-weight: 900; font-size: 250px; line-height: .95; color: #F6E7C4; white-space: nowrap; text-shadow: 0 2px 0 #E0A84B, 0 4px 0 #D49C43, 0 6px 0 #C8913C, 0 8px 0 #B98434, 0 10px 0 #A9742B, 0 12px 0 #946424, 0 26px 50px rgba(0,0,0,.8); }
+#card .num.mid { font-size: 150px; line-height: 1.1; padding-top: 30px; }
+#card .num.small { font-size: 112px; line-height: 1.1; padding-top: 50px; }
+#meter { display: flex; justify-content: center; gap: 12px; margin-top: 28px; }
+#meter i { display: block; width: 74px; height: 16px; border-radius: 8px; background: #2C241C; }
+#meter i.on { background: #E0A84B; box-shadow: 0 0 18px rgba(224,168,75,.7); }
+#desc { margin-top: 30px; font-weight: 800; font-size: 48px; color: #F5EEDC; text-shadow: 0 3px 14px rgba(0,0,0,.9); }
+#small { margin-top: 10px; font-weight: 700; font-size: 30px; letter-spacing: .14em; color: #8C7B66; }
+#timer { position: absolute; top: 610px; left: 0; right: 0; height: 260px; text-align: center; opacity: 0; }
+#timer svg { width: 260px; height: 260px; }
+#timer .n { position: absolute; left: 0; right: 0; top: 0; line-height: 260px; font-weight: 900; font-size: 130px; color: #F5EEDC; }
+#slam { position: absolute; top: 230px; left: 30px; right: 30px; text-align: center; font-weight: 900; font-size: 122px; line-height: 1.02; color: #F6E7C4; opacity: 0; text-shadow: 0 2px 0 #E0A84B, 0 4px 0 #D49C43, 0 6px 0 #C8913C, 0 8px 0 #B98434, 0 10px 0 #A9742B, 0 26px 50px rgba(0,0,0,.8); }
+#slam.long { font-size: 96px; }
+#slamsub { position: absolute; top: 520px; left: 40px; right: 40px; text-align: center; font-weight: 800; font-size: 50px; color: #E9DCC0; opacity: 0; text-shadow: 0 4px 18px rgba(0,0,0,.9); }
+#endq { font-size: 104px; line-height: 1.04; }
+#phone { position: absolute; top: 470px; left: 50%; width: 600px; height: 1060px; margin-left: -300px; border-radius: 72px; background: #050404; border: 6px solid #3A2F24; box-shadow: 0 40px 90px rgba(0,0,0,.8), 0 0 0 2px #110D0A; opacity: 0; overflow: hidden; }
+#phone .scr { position: absolute; inset: 18px; border-radius: 56px; background: #0E0C0A; padding: 64px 40px 0; color: #F5EEDC; font-weight: 700; }
+#phone .notch { position: absolute; top: 30px; left: 50%; margin-left: -70px; width: 140px; height: 34px; border-radius: 20px; background: #000; }
+#phone .wk { font-size: 24px; letter-spacing: .18em; color: #E0A84B; font-weight: 800; margin-top: 10px; }
+#phone .ttl { font-size: 42px; font-weight: 900; margin-top: 18px; line-height: 1.1; }
+#phone .meta { font-size: 24px; color: #9C8A72; margin-top: 8px; }
+#phone .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+#phone .chip { padding: 10px 18px; border-radius: 999px; border: 2px solid #4A3C2E; font-size: 24px; font-weight: 800; }
+#phone .chip.g { border-color: #E0A84B; color: #E0A84B; }
+#phone .met { margin-top: 22px; padding: 16px 26px; border-radius: 26px; background: #17120E; display: flex; align-items: center; gap: 18px; }
+#phone .dot { width: 34px; height: 34px; border-radius: 50%; background: #E0A84B; }
+#phone .met b { font-size: 44px; font-weight: 900; } #phone .met span { font-size: 22px; color: #9C8A72; }
+#phone .seg { margin-top: 12px; padding: 16px 26px; border-radius: 22px; background: #17120E; display: flex; justify-content: space-between; font-size: 28px; font-weight: 800; }
+#phone .seg i { font-style: normal; color: #9C8A72; }
+#phone .seg.on { border: 2px solid #E0A84B; }
+#phone .btn { margin-top: 20px; padding: 20px; border-radius: 999px; background: #E0A84B; color: #1A140E; text-align: center; font-size: 30px; font-weight: 900; }
+#phone .chk { display: flex; gap: 10px; margin-top: 18px; }
+#phone .chk div { flex: 1; text-align: center; padding: 14px 0; border-radius: 16px; border: 2px solid #4A3C2E; font-size: 21px; font-weight: 800; color: #CDBEA5; }
+#phone .note { margin-top: 18px; text-align: center; font-size: 20px; color: #7A6A57; }
+#lt { position: absolute; bottom: 150px; left: 0; right: 0; text-align: center; opacity: 0; }
+#lt .pill { display: inline-block; padding: 24px 46px; border-radius: 999px; background: rgba(22,17,13,.92); border: 3px solid #E0A84B; color: #F6E7C4; font-weight: 800; font-size: 46px; }
+#lt .sub { margin-top: 16px; font-weight: 700; font-size: 32px; color: #9C8A72; }
+#mark { position: absolute; bottom: 64px; left: 0; right: 0; text-align: center; font-family: "Cormorant"; font-weight: 700; font-size: 40px; letter-spacing: .18em; color: #E0A84B; opacity: 0; }
+#ai { position: absolute; bottom: 22px; left: 0; right: 0; text-align: center; font-weight: 700; font-size: 22px; color: #6E604F; opacity: 0; }
+</style></head><body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="topfade"></div><div id="vig"></div><div id="dim"></div><div id="red"></div>
+  <div id="hook" class="big"></div>
+  <div id="cap" class="big"></div><div id="sub"></div><div id="tag"><span></span></div>
+  <div id="card"><div class="lab"></div><div class="num"></div><div id="meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="desc"></div><div id="small"></div></div>
+  <div id="timer"><svg viewBox="0 0 260 260"><circle cx="130" cy="130" r="112" fill="rgba(22,17,13,.85)" stroke="#2C241C" stroke-width="16"/><circle id="ring" cx="130" cy="130" r="112" fill="none" stroke="#E0A84B" stroke-width="16" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="0" transform="rotate(-90 130 130)"/></svg><div class="n"></div></div>
+  <div id="slam"></div><div id="slamsub"></div>
+  <div id="endq" class="big"></div><div id="end2"></div>
+  <div id="phone"><div class="scr"><div class="notch"></div>
+    <div class="wk">WEEK 1 &middot; SESSION 1 OF 5</div>
+    <div class="ttl">Debussy &mdash; Clair de Lune</div>
+    <div class="meta">Grade 6 &middot; 5 days a week &middot; 30 min</div>
+    <div class="chips"><div class="chip">Opening theme</div><div class="chip">Left hand</div><div class="chip g">40% tempo &middot; 36 BPM</div></div>
+    <div class="met"><div class="dot" id="pdot"></div><div><b>36 BPM</b><br><span>Metronome</span></div></div>
+    <div class="seg on" id="seg1"><span>Warm-up</span><i>5 min</i></div>
+    <div class="seg" id="seg2"><span>Main work</span><i>20 min</i></div>
+    <div class="seg" id="seg3"><span>Run-through</span><i>5 min</i></div>
+    <div class="btn">Finish session</div>
+    <div class="chk"><div>Too hard</div><div>Just right</div><div>Too easy</div></div>
+    <div class="note">Real example plan &middot; betweenlessons.org/example</div>
+  </div></div>
+  <div id="lt"><div class="pill">betweenlessons.org &middot; Day 1 free</div><div class="sub">I built it &middot; comment PLAN</div></div>
+  <div id="mark">BETWEENLESSONS.ORG</div>
+  <div id="ai">Arranged &amp; animated with AI help &middot; #ad</div>
+  <div id="flash"></div>
+</div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module" src="./scene.js"></script>
+</body></html>
