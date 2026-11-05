@@ -1,0 +1,704 @@
+<title>Clarity Engine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: left rail of the 4-week edit + report; main column of working panels. Cycle ring is the hero of the report. */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#14202e; --muted:#5b6878; --line:#d5dbe3;
+  --accent:#2747d6; --accent-ink:#ffffff; --soft:#e4e9f7;
+  --good:#1f8a5b; --warn:#a66a12; --bad:#c2413b;
+  --good-soft:#e2f3ea; --warn-soft:#f8eedb; --bad-soft:#f8e3e1;
+  --f-display:"Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e141c; --surface:#161e29; --ink:#e6ebf2; --muted:#93a0b2; --line:#263142;
+  --accent:#8197ff; --accent-ink:#0b1020; --soft:#1c2640;
+  --good:#4cc38a; --warn:#e0a84a; --bad:#f07068;
+  --good-soft:#163024; --warn-soft:#33270f; --bad-soft:#3a1c1b; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e141c; --surface:#161e29; --ink:#e6ebf2; --muted:#93a0b2; --line:#263142;
+  --accent:#8197ff; --accent-ink:#0b1020; --soft:#1c2640;
+  --good:#4cc38a; --warn:#e0a84a; --bad:#f07068;
+  --good-soft:#163024; --warn-soft:#33270f; --bad-soft:#3a1c1b; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+nav.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;height:100vh;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:-.01em}
+.brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0;margin-top:2px}
+.navlist{display:flex;flex-direction:column;gap:4px}
+.navlist a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500}
+.navlist a:hover{background:var(--soft)}
+.navlist a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.navlist .wk{font-family:var(--f-mono);font-size:11px;opacity:.7;min-width:30px}
+.navlist .dot{width:8px;height:8px;border-radius:50%;margin-left:auto;background:var(--line)}
+.save{margin-top:auto;font-size:12px;color:var(--muted)}
+main{padding-block:28px 60px;padding-left:28px;padding-right:max(28px,env(safe-area-inset-right,0px));min-width:0;max-width:1100px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(22px,3vw,30px);line-height:1.15;margin:0 0 6px;text-wrap:balance;letter-spacing:-.015em}
+h2{font-family:var(--f-display);font-weight:500;font-size:16px;margin:0 0 10px;letter-spacing:-.005em}
+h3{font-size:14px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.lede{color:var(--muted);max-width:65ch;margin:0 0 22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:68px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.ghost{background:transparent;border-color:transparent;color:var(--muted);padding:6px 8px}
+button.ghost:hover{color:var(--bad)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 10px;font-size:13px;background:transparent}
+.seg button[aria-pressed="true"].g{background:var(--good);color:#fff}
+.seg button[aria-pressed="true"].r{background:var(--bad);color:#fff}
+.seg button[aria-pressed="true"].n{background:var(--muted);color:var(--surface)}
+.seg button[aria-pressed="true"].a{background:var(--accent);color:var(--accent-ink)}
+table{width:100%;border-collapse:collapse}
+.tbl{overflow-x:auto}
+td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td input,td select{padding:6px 8px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--soft);border-radius:var(--r);padding:10px 14px;margin-bottom:18px;font-size:14px}
+.banner b{font-weight:700}
+.hint{font-size:13px;color:var(--muted)}
+.area-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.score{font-family:var(--f-mono);font-size:13px;font-weight:500}
+.score.good{color:var(--good)}.score.warn{color:var(--warn)}.score.bad{color:var(--bad)}
+.feedback{display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:13px}
+.fb{display:flex;gap:8px;align-items:flex-start}
+.fb i{font-style:normal;font-family:var(--f-mono);font-weight:500;min-width:14px}
+.fb.good i{color:var(--good)}.fb.bad i{color:var(--bad)}.fb.warn i{color:var(--warn)}
+/* Report */
+.hero{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:24px;align-items:center}
+.ring svg{width:100%;height:auto;display:block;max-width:420px}
+.ring text{fill:var(--ink);font-family:var(--f-body)}
+.ring .node{cursor:pointer}
+.ring .node:hover circle.bg{stroke:var(--accent)}
+.big{font-family:var(--f-display);font-weight:700;font-size:64px;line-height:1;letter-spacing:-.03em}
+.big small{font-size:20px;color:var(--muted);font-weight:500}
+.verdict{font-size:17px;font-weight:600;margin:10px 0 4px;max-width:50ch}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.list li{font-size:14px;padding:8px 10px;border-radius:8px;background:var(--bg)}
+.list li b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-bottom:2px}
+.col-good h2{color:var(--good)}.col-bad h2{color:var(--bad)}.col-change h2{color:var(--accent)}
+.mini{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:14px}
+.mini span.n{padding:6px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.mini span.arr{color:var(--muted)}
+.ai-out{white-space:normal;font-size:14px;line-height:1.6;max-width:72ch}
+.ai-out ul{padding-left:18px;margin:6px 0}
+.ai-out p{margin:6px 0}
+.bar{height:8px;border-radius:99px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.bar > div{height:100%;background:var(--accent)}
+.split{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.split div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:0;overflow:hidden}
+.grid-days{display:grid;grid-template-columns:minmax(120px,1.4fr) repeat(14,minmax(22px,1fr));gap:3px;align-items:center;font-size:12px}
+.grid-days .cell{aspect-ratio:1;max-width:100%;border-radius:4px;background:var(--bg);border:1px solid var(--line);cursor:pointer;padding:0}
+.grid-days .cell.on{background:var(--good);border-color:var(--good)}
+.grid-days .cell.today{outline:2px solid var(--accent);outline-offset:1px}
+.grid-days .hd{font-family:var(--f-mono);font-size:10px;color:var(--muted);text-align:center}
+.alert{border-left:4px solid var(--bad);background:var(--bad-soft);padding:10px 12px;border-radius:6px;font-size:14px}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:max(16px,env(safe-area-inset-right,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:14px;font-weight:600}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;height:auto;flex-direction:row;align-items:center;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);padding-block:10px;padding-right:max(16px,env(safe-area-inset-right,0px));gap:10px}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+  .brand small,.save{display:none}
+  .navlist{flex-direction:row;overflow-x:auto;gap:2px;max-width:100%}
+  .navlist a{padding:6px 8px;font-size:13px;white-space:nowrap}
+  .navlist .wk,.navlist .dot{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+  .hero,.grid2,.grid3,.cols3{grid-template-columns:minmax(0,1fr)}
+  .big{font-size:48px}
+}
+@media (prefers-reduced-motion:no-preference){ .pulse{animation:pulse 1.8s ease-in-out infinite} @keyframes pulse{50%{opacity:.35}} }
+</style>
+
+<div class="app">
+  <nav class="rail" aria-label="Sections">
+    <div class="brand">Clarity Engine<small>The 4-Week Edit, scored</small></div>
+    <div class="navlist" id="nav"></div>
+    <div class="save" id="saveState">Not saved yet</div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Model ---------- */
+const AREAS = [
+  {k:"body", name:"Body", eg:"I weigh 82 kg and ran a sub-25 min 5K."},
+  {k:"bank", name:"Bank", eg:"I made $120k profit and invested $2k every month."},
+  {k:"calendar", name:"Calendar", eg:"I work out 5x a week and stop work at 6pm."},
+  {k:"people", name:"People", eg:"I spend every Friday with 3 founders who push me. I don't spend time with complainers."}
+];
+const SECTIONS = [
+  {id:"clarity", label:"Clarity report", wk:"OUT"},
+  {id:"envision", label:"Envision", wk:"WK 1"},
+  {id:"identity", label:"Have · Be · Do", wk:"WK 1"},
+  {id:"delete", label:"Delete", wk:"WK 2"},
+  {id:"install", label:"Install", wk:"WK 3"},
+  {id:"track", label:"Track", wk:"WK 4"}
+];
+const CYCLE = [
+  {k:"thoughts", name:"Thoughts", sec:"envision", what:"How specific your 10.0 vision is"},
+  {k:"feelings", name:"Feelings", sec:"envision", what:"Whether you know why each goal matters"},
+  {k:"actions", name:"Actions", sec:"delete", what:"Time and people pointed at the vision"},
+  {k:"habits", name:"Habits", sec:"install", what:"Quality of your daily non-negotiables"},
+  {k:"identity", name:"Identity", sec:"identity", what:"\"I am\" statements backed by habits"},
+  {k:"reality", name:"Reality", sec:"track", what:"Measured progress and consistency"}
+];
+const uid = () => Math.random().toString(36).slice(2,9);
+const today = () => new Date().toISOString().slice(0,10);
+const dayKey = (offset) => { const d=new Date(); d.setDate(d.getDate()-offset); return d.toISOString().slice(0,10); };
+
+function blank(){
+  return {
+    example:false,
+    vision:Object.fromEntries(AREAS.map(a=>[a.k,{now:"",ten:"",why:""}])),
+    be:[], doo:[],
+    time:[], traits:"", people:[],
+    env:[], nonneg:[],
+    track:{metric:"",unit:"",start:"",target:"",current:"",history:[]},
+    checks:{}, reviews:[]
+  };
+}
+function example(){
+  const s = blank(); s.example = true;
+  s.vision.body = {now:"I'm 94 kg, gym maybe twice a week, no energy after 3pm.", ten:"I weigh 84 kg, train 5x a week and ran a 5K in under 27 minutes.", why:"I want to feel proud in photos and keep up with my kids."};
+  s.vision.bank = {now:"Making about $4k/month, no savings.", ten:"I want to make more money and be richer.", why:""};
+  s.vision.calendar = {now:"Scrolling 3+ hours a day, no fixed work hours.", ten:"I work in 3 deep-work blocks a day and I'm offline after 9pm.", why:"Clarity. I'm tired of busy days that go nowhere."};
+  s.vision.people = {now:"Most of my time is with old school friends.", ten:"I will try to meet better people someday.", why:""};
+  s.be = ["I am an athlete","I am disciplined with money","productive"];
+  s.doo = ["I train before work","I don't drink on weeknights","I read 10 pages a day"];
+  s.time = [
+    {id:uid(),activity:"Deep work on business",hours:14,tag:"green",plan:"keep"},
+    {id:uid(),activity:"Social media scrolling",hours:21,tag:"red",plan:"friction"},
+    {id:uid(),activity:"Gym",hours:3,tag:"green",plan:"keep"},
+    {id:uid(),activity:"Netflix late at night",hours:10,tag:"red",plan:""},
+    {id:uid(),activity:"Calls with complaining friend",hours:3,tag:"red",plan:"cut"},
+    {id:uid(),activity:"Email / admin",hours:8,tag:"neutral",plan:""}
+  ];
+  s.traits = "positive, driven, financially successful, kind";
+  s.people = [
+    {id:uid(),name:"Sam (mentor)",hours:2,type:"amp"},
+    {id:uid(),name:"Jake (school friend)",hours:8,type:"vamp"},
+    {id:uid(),name:"Founder group",hours:1,type:"amp"},
+    {id:uid(),name:"Cousin Mike",hours:5,type:"vamp"}
+  ];
+  s.env = [
+    {id:uid(),kind:"space",text:"Gym clothes laid out by the bed every night"},
+    {id:uid(),kind:"input",text:"Unfollowed 40 accounts, followed 10 founders"}
+  ];
+  s.nonneg = [
+    {id:uid(),habit:"Workout",area:"body",tiny:"10 push-ups",anchor:"After I brush my teeth",reward:"New running shoes at 30 days",stake:"$200 to a friend if I miss 2 days in a row"},
+    {id:uid(),habit:"Write my business plan for an hour every day and finish the whole thing",area:"business",tiny:"",anchor:"",reward:"",stake:""},
+    {id:uid(),habit:"Read",area:"mind",tiny:"1 page",anchor:"When I get into bed",reward:"",stake:""}
+  ];
+  s.track = {metric:"Body weight",unit:"kg",start:"94",target:"84",current:"91",history:[{date:dayKey(21),value:94},{date:dayKey(14),value:93},{date:dayKey(7),value:92},{date:dayKey(0),value:91}]};
+  const ids = s.nonneg.map(n=>n.id);
+  for(let i=0;i<14;i++){ const k=dayKey(i); s.checks[k] = ids.filter((_,j)=> (i*7+j*3)%5!==0 && !(j===1 && i<9) && !(i<2 && j===0)); }
+  s.reviews = [{date:dayKey(5),win:"Hit the gym 4 times",adjust:"Phone in another room after 9pm"}];
+  return s;
+}
+
+/* ---------- Persistence: account (db) first, device fallback ---------- */
+let S = null, dbDoc = null, saveTimer = null;
+const LS_KEY = "clarity-engine-v1";
+function lsGet(){ try{ const v=localStorage.getItem(LS_KEY); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(v){ try{ localStorage.setItem(LS_KEY, JSON.stringify(v)); return true; }catch(e){ return false; } }
+function setSaveLabel(t){ document.getElementById("saveState").textContent = t; }
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    lsSet(S);
+    if(dbDoc){
+      try{ await dbDoc.set({json:JSON.stringify(S), updated:Date.now()}); setSaveLabel("Saved to your account · "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})); }
+      catch(e){ setSaveLabel("Saved on this device only"); }
+    } else setSaveLabel("Saved on this device");
+  }, 700);
+}
+function migrate(s){ const b=blank(); const o=Object.assign(b, s||{}); o.vision=Object.assign(blank().vision, o.vision||{}); o.track=Object.assign(blank().track, o.track||{}); return o; }
+
+async function initStore(){
+  S = migrate(lsGet() || example());
+  render();
+  try{
+    if(!window.claude?.use) return;
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if(!db || !user) return;
+    const id = await user.id(); if(!id) return;
+    dbDoc = db.collection("data/users/"+id).doc("clarity");
+    const snap = await dbDoc.get();
+    if(snap.exists){ const d=snap.data(); if(d && d.json){ S = migrate(JSON.parse(d.json)); lsSet(S); render(); } setSaveLabel("Synced with your account"); }
+    else { setSaveLabel("Account storage ready"); if(!S.example) save(); }
+  }catch(e){ /* stay on device storage */ }
+}
+
+/* ---------- Analysis engine ---------- */
+const FUTURE = /\b(will|going to|gonna|want to|wanna|hope to|try to|trying to|plan to|would like|someday|one day|eventually)\b/i;
+const VAGUE = /\b(healthier|more|better|less|some|a lot|happier|richer|fitter|improve|successful|good|nice|enough)\b/i;
+const HASNUM = /\d/;
+const clamp = (n)=>Math.max(0,Math.min(100,Math.round(n)));
+const tone = (n)=> n>=70?"good":n>=40?"warn":"bad";
+
+function visionCheck(t){
+  const out=[]; let sc=0; t=(t||"").trim();
+  if(!t) return {score:0, fb:[{t:"bad",m:"Empty. You can't hit a target you can't see."}]};
+  sc+=30;
+  if(HASNUM.test(t)){ sc+=30; out.push({t:"good",m:"Has a number you can measure."}); } else out.push({t:"bad",m:"No number. Add a weight, amount, count or date."});
+  const fm=t.match(FUTURE);
+  if(fm) out.push({t:"bad",m:`Future tense ("${fm[0]}"). Write it as already done: "I weigh…", "I made…".`}); else { sc+=25; out.push({t:"good",m:"Written as already true."}); }
+  const vm=t.match(VAGUE);
+  if(vm && !HASNUM.test(t)) out.push({t:"warn",m:`Vague word ("${vm[0]}") with nothing measurable behind it.`}); else sc+=15;
+  return {score:clamp(sc), fb:out};
+}
+
+function analyze(s){
+  const good=[], bad=[], change=[];
+  const add=(arr,area,msg,w=1)=>arr.push({area,msg,w});
+  /* Thoughts */
+  const vScores = AREAS.map(a=>({a, r:visionCheck(s.vision[a.k].ten)}));
+  const thoughts = clamp(vScores.reduce((t,x)=>t+x.r.score,0)/AREAS.length);
+  vScores.forEach(({a,r})=>{
+    const txt=s.vision[a.k].ten.trim();
+    if(r.score>=85) add(good,"Vision · "+a.name,`Specific and present-tense: "${txt.slice(0,70)}${txt.length>70?"…":""}"`);
+    else if(!txt) add(bad,"Vision · "+a.name,`No ${a.name.toLowerCase()} vision. Six months from now you'll be busy and in the same place.`,3);
+    else { add(bad,"Vision · "+a.name,r.fb.filter(f=>f.t!=="good").map(f=>f.m).join(" "),2); add(change,"Vision · "+a.name,`Rewrite it like Dec 31 already happened, with a number. Example: "${a.eg}"`,2); }
+  });
+  /* Feelings */
+  const whys = AREAS.filter(a=>s.vision[a.k].why.trim().length>=12).length;
+  const feelings = clamp(whys/AREAS.length*100);
+  if(whys===AREAS.length) add(good,"Feelings","Every area has a reason that matters to you.");
+  else add(change,"Feelings",`Write why ${AREAS.filter(a=>s.vision[a.k].why.trim().length<12).map(a=>a.name).join(", ")} matters to you. A goal with no reason behind it is easy to drop.`,1);
+  /* Actions: time + people */
+  const tagged = s.time.filter(t=>+t.hours>0);
+  const total = tagged.reduce((a,t)=>a+ +t.hours,0);
+  const green = tagged.filter(t=>t.tag==="green").reduce((a,t)=>a+ +t.hours,0);
+  const red = tagged.filter(t=>t.tag==="red");
+  const redH = red.reduce((a,t)=>a+ +t.hours,0);
+  const redPlanned = red.filter(t=>t.plan==="cut"||t.plan==="friction");
+  let timeScore = total? (green/total)*70 + (red.length? redPlanned.length/red.length*30 : 30) : 0;
+  if(total>168) add(bad,"Time audit",`You logged ${total} h/week. A week has 168. Check your numbers.`,2);
+  if(!tagged.length) add(bad,"Time audit","No time audit yet. Most people don't know where their week goes.",3);
+  else{
+    if(green/total>=.5) add(good,"Time audit",`${Math.round(green/total*100)}% of logged time pushes you toward the vision.`);
+    if(redH>0){
+      const worst=[...red].sort((a,b)=>b.hours-a.hours)[0];
+      add(bad,"Time audit",`${redH} h/week pull you away from your goals. Biggest: "${worst.activity}" (${worst.hours} h).`,redH>=15?3:2);
+      red.filter(t=>!t.plan || t.plan==="keep").forEach(t=>add(change,"Delete",`"${t.activity}" has no plan. Cut it, or add friction (log out, phone in another room, app blocker).`,2));
+      if(redH>=10) add(change,"Reinvest",`Move even half of those ${redH} red hours into green and you gain about ${Math.round(redH/2*26)} hours over the next 6 months.`,2);
+    }
+  }
+  const pt = s.people.filter(p=>+p.hours>0);
+  const pTotal = pt.reduce((a,p)=>a+ +p.hours,0);
+  const ampH = pt.filter(p=>p.type==="amp").reduce((a,p)=>a+ +p.hours,0);
+  const peopleScore = pTotal? ampH/pTotal*100 : 0;
+  if(pTotal){
+    if(ampH/pTotal>=.6) add(good,"Friend inventory",`${Math.round(ampH/pTotal*100)}% of your social time is with amplifiers.`);
+    else add(bad,"Friend inventory",`Only ${Math.round(ampH/pTotal*100)}% of your social time is with amplifiers. The people around you set your ceiling.`,2);
+    pt.filter(p=>p.type==="vamp" && +p.hours>=4).forEach(p=>add(change,"People",`Cut time with ${p.name} from ${p.hours} h to ${Math.max(1,Math.round(p.hours/3))} h a week. You can still care about them from a distance.`,2));
+    if(!pt.some(p=>p.type==="amp")) add(change,"People","You have no amplifiers. Find one this week: ask someone \"Do you know anyone who could help me with X?\"",3);
+  } else add(bad,"Friend inventory","You haven't listed the people you spend time with.",1);
+  const actions = clamp(tagged.length||pTotal ? (timeScore*0.6 + peopleScore*0.4) : 0);
+  /* Habits */
+  let hs=0;
+  s.nonneg.forEach(n=>{
+    let q=0; const issues=[];
+    if(n.habit.trim()) q+=20;
+    if(n.tiny.trim() && n.tiny.split(/\s+/).length<=6) q+=25; else issues.push("no tiny version");
+    if(n.anchor.trim()) q+=25; else issues.push("no habit-stack anchor");
+    if(n.stake.trim()) q+=20; else issues.push("nothing at stake");
+    if(n.reward.trim()) q+=10;
+    hs+=q;
+    if(q>=80) add(good,"Non-negotiable",`"${n.habit}": small, attached to something you already do, with something at stake.`);
+    else if(issues.length) add(change,"Non-negotiable",`"${n.habit.slice(0,50)}": ${issues.join(", ")}. ${!n.tiny.trim()?"Make it embarrassingly small (1 page, 10 push-ups). ":""}${!n.anchor.trim()?"Attach it to an existing routine (\"After I brush my teeth…\"). ":""}`,2);
+    if(n.habit.split(/\s+/).length>10) add(bad,"Non-negotiable",`"${n.habit.slice(0,40)}…" is too big to do every day. Big habits get skipped.`,2);
+  });
+  let habits = s.nonneg.length? hs/s.nonneg.length : 0;
+  if(s.nonneg.length>6){ habits-=15; add(bad,"Non-negotiables",`${s.nonneg.length} non-negotiables is too many. Keep 1-2 each for mind, body and business.`,2); }
+  if(!s.nonneg.length) add(bad,"Non-negotiables","No daily non-negotiables yet. Without them nothing else sticks.",3);
+  const areasCovered = new Set(s.nonneg.map(n=>n.area));
+  ["mind","body","business"].filter(a=>!areasCovered.has(a)).forEach(a=>s.nonneg.length && add(change,"Non-negotiables",`No non-negotiable for ${a}. Add one.`,1));
+  habits = clamp(habits);
+  /* Identity */
+  const beGood = s.be.filter(b=>/^\s*i\s*am\b/i.test(b));
+  const beBad = s.be.filter(b=>b.trim() && !/^\s*i\s*am\b/i.test(b));
+  let identity = Math.min(beGood.length,4)/4*50 + Math.min(s.doo.length,4)/4*30 + (s.nonneg.length?20:0);
+  if(beGood.length>=3) add(good,"Identity",`${beGood.length} "I am" statements: ${beGood.slice(0,3).map(b=>b.replace(/^\s*i am\s*/i,"")).join(", ")}.`);
+  beBad.forEach(b=>add(change,"Identity",`Rewrite "${b}" as "I am ${b.replace(/^\s*(be|being)\s+/i,"")}".`,1));
+  if(!s.be.length) add(bad,"Identity","You have no \"I am\" statements. Who do you need to be to get these goals?",2);
+  if(s.be.length && !s.doo.length) add(bad,"Identity","Identity statements with no habits behind them are just wishes. Your habits make you who you are.",2);
+  identity = clamp(identity);
+  /* Reality */
+  const t=s.track; let reality=0, prog=null;
+  if(t.metric.trim()) reality+=20; else add(bad,"North Star","No North Star metric. If you don't measure it, you can't manage it.",3);
+  const st=parseFloat(t.start), tg=parseFloat(t.target), cu=parseFloat(t.current);
+  if(!isNaN(st)&&!isNaN(tg)&&!isNaN(cu)&&tg!==st){ prog=Math.max(0,Math.min(1,(cu-st)/(tg-st))); reality+=prog*30; if(prog>0) add(good,"North Star",`${Math.round(prog*100)}% of the way from ${st} to ${tg} ${t.unit}.`); }
+  const ids = s.nonneg.map(n=>n.id);
+  let done=0, poss=0;
+  for(let i=0;i<7;i++){ const c=s.checks[dayKey(i)]||[]; ids.forEach(id=>{poss++; if(c.includes(id)) done++;}); }
+  const consistency = poss? done/poss : 0;
+  reality += consistency*50; reality=clamp(reality);
+  if(poss){ if(consistency>=.8) add(good,"Scorecard",`${Math.round(consistency*100)}% of non-negotiables done in the last 7 days.`); else add(bad,"Scorecard",`Only ${Math.round(consistency*100)}% of non-negotiables done in the last 7 days.`,2); }
+  const missedTwice = s.nonneg.filter(n=>![0,1].some(i=>(s.checks[dayKey(i)]||[]).includes(n.id)) && [2,3,4].some(i=>(s.checks[dayKey(i)]||[]).includes(n.id)));
+  missedTwice.forEach(n=>add(change,"Never miss twice",`You missed "${n.habit.slice(0,40)}" yesterday. Do the tiny version today so it isn't two in a row.`,3));
+  const lastRev = s.reviews.map(r=>r.date).sort().pop();
+  if(!lastRev || (Date.now()-new Date(lastRev))/864e5>8) add(change,"Weekly review","Do your Friday review: one win and one or two changes for next week.",1);
+
+  const scores = {thoughts,feelings,actions,habits,identity,reality};
+  const overall = clamp(Object.values(scores).reduce((a,b)=>a+b,0)/6);
+  const weakest = CYCLE.reduce((w,c)=> scores[c.k]<scores[w.k]?c:w, CYCLE[0]);
+  const sortW = (a)=>a.sort((x,y)=>y.w-x.w);
+  return {scores, overall, weakest, good, bad:sortW(bad), change:sortW(change), extra:{total,green,redH,pTotal,ampH,consistency,prog}};
+}
+
+function verdictFor(a){
+  const o=a.overall, w=a.weakest;
+  const lead = o>=75?"Your system is solid.":o>=50?"The foundation is there, but there are leaks.":o>=25?"Your edit is half-built.":"You're running on hope, not a plan.";
+  const map={thoughts:"your vision isn't specific enough to aim at",feelings:"you haven't written why these goals matter",actions:"your time and people work against your vision",habits:"your habits are too big or not attached to anything",identity:"you haven't decided who you're becoming",reality:"you aren't keeping score"};
+  return `${lead} The weakest link is ${w.name}: ${map[w.k]}.`;
+}
+
+/* ---------- Rendering helpers ---------- */
+const esc = (s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const $ = (sel,root=document)=>root.querySelector(sel);
+let current = "clarity";
+function toast(m){ const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>t.hidden=true,2200); }
+function scoreTag(n){ return `<span class="score ${tone(n)}">${n}/100</span>`; }
+function fbList(fb){ return `<div class="feedback">${fb.map(f=>`<div class="fb ${f.t}"><i>${f.t==="good"?"✓":f.t==="bad"?"✗":"!"}</i><span>${esc(f.m)}</span></div>`).join("")}</div>`; }
+
+function renderNav(a){
+  $("#nav").innerHTML = SECTIONS.map(s=>{
+    const relevant = CYCLE.filter(c=>c.sec===s.id).map(c=>a.scores[c.k]);
+    const col = relevant.length? `var(--${tone(Math.min(...relevant))})` : "var(--accent)";
+    return `<a href="#${s.id}" ${s.id===current?'aria-current="page"':""}><span class="wk">${s.wk}</span>${s.label}<span class="dot" style="background:${col}"></span></a>`;
+  }).join("");
+}
+
+function banner(){
+  return S.example? `<div class="banner"><span><b>Example data.</b> This is a sample person so you can see how the scoring works. Clear it to start with your own.</span><button class="primary" data-act="clear">Start with my own</button></div>` : "";
+}
+
+/* ---------- Views ---------- */
+function ringSVG(a){
+  const W=420, cx=210, cy=210, R=150;
+  const pts = CYCLE.map((c,i)=>{ const ang=-Math.PI/2 + i*2*Math.PI/CYCLE.length; return {c, x:cx+R*Math.cos(ang), y:cy+R*Math.sin(ang), ang}; });
+  let arcs="";
+  pts.forEach((p,i)=>{ const q=pts[(i+1)%pts.length];
+    const hi = ["habits","identity"].includes(p.c.k);
+    const mx=(p.x+q.x)/2, my=(p.y+q.y)/2; const dx=mx-cx, dy=my-cy; const L=Math.hypot(dx,dy);
+    const bx=cx+dx/L*(R+26), by=cy+dy/L*(R+26);
+    arcs+=`<path d="M${p.x},${p.y} Q${bx},${by} ${q.x},${q.y}" fill="none" stroke="${hi?"var(--accent)":"var(--line)"}" stroke-width="${hi?3:2}" marker-end="url(#ah${hi?"h":""})"/>`;
+  });
+  const nodes = pts.map(p=>{ const s=a.scores[p.c.k]; const col=`var(--${tone(s)})`; const weak=a.weakest.k===p.c.k;
+    const frac=s/100, r=34, circ=2*Math.PI*r;
+    return `<g class="node" data-go="${p.c.sec}" tabindex="0" role="link" aria-label="${p.c.name} ${s} out of 100">
+      ${weak?`<circle cx="${p.x}" cy="${p.y}" r="44" fill="none" stroke="var(--bad)" stroke-width="2" class="pulse"/>`:""}
+      <circle class="bg" cx="${p.x}" cy="${p.y}" r="${r}" fill="var(--surface)" stroke="var(--line)" stroke-width="6"/>
+      <circle cx="${p.x}" cy="${p.y}" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ*frac} ${circ}" transform="rotate(-90 ${p.x} ${p.y})"/>
+      <text x="${p.x}" y="${p.y-3}" text-anchor="middle" font-size="11" font-weight="700">${p.c.name}</text>
+      <text x="${p.x}" y="${p.y+13}" text-anchor="middle" font-size="13" style="font-family:var(--f-mono);fill:${col}">${s}</text></g>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${W}" role="img" aria-label="Cycle from thoughts to reality">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/></marker>
+    <marker id="ahh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+    ${arcs}
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="40" font-weight="700" style="font-family:var(--f-display);fill:var(--ink)">${a.overall}</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="12" style="fill:var(--muted)">clarity score</text>
+    ${nodes}</svg>`;
+}
+
+function viewClarity(a){
+  const li = (arr,empty)=> arr.length? arr.slice(0,8).map(x=>`<li><b>${esc(x.area)}</b>${esc(x.msg)}</li>`).join("") : `<li>${empty}</li>`;
+  return `${banner()}
+  <h1>Your clarity report</h1>
+  <p class="lede">Everything you put into the four weeks, scored against Harv Eker's cycle extended with habits and identity. Click a node in the ring to fix that part.</p>
+  <section class="panel hero">
+    <div class="ring">${ringSVG(a)}</div>
+    <div class="stack">
+      <div><div class="big">${a.overall}<small>/100</small></div>
+      <p class="verdict">${esc(verdictFor(a))}</p></div>
+      <div>
+        <h3>The core loop</h3>
+        <div class="mini"><span class="n">Habits</span><span class="arr">→</span><span class="n">Identity</span><span class="arr">→</span><span class="n">Goal achieved</span></div>
+        <p class="hint">Habits ${a.scores.habits} · Identity ${a.scores.identity} · Reality ${a.scores.reality}. Your habits make you the person, and that person reaches the goal. Start here, not with motivation.</p>
+      </div>
+      <div class="row"><button class="primary" data-act="ai">Get a deep read from Claude</button><button data-act="copy">Copy report</button></div>
+    </div>
+  </section>
+  <section class="panel" id="aiPanel" hidden style="margin-top:16px"><h2>Claude's read</h2><div class="ai-out" id="aiOut"></div></section>
+  <div class="cols3" style="margin-top:16px">
+    <section class="panel col-bad"><h2>What's bad</h2><ul class="list">${li(a.bad,"Nothing flagged.")}</ul></section>
+    <section class="panel col-change"><h2>What to change</h2><ul class="list">${li(a.change,"No changes suggested.")}</ul></section>
+    <section class="panel col-good"><h2>What's good</h2><ul class="list">${li(a.good,"Nothing yet. Fill in the weeks to earn some.")}</ul></section>
+  </div>
+  <section class="panel" style="margin-top:16px">
+    <h2>Score breakdown</h2>
+    <div class="stack">${CYCLE.map(c=>`<div><div class="area-head"><span><b>${c.name}</b> <span class="hint">${c.what}</span></span>${scoreTag(a.scores[c.k])}</div><div class="bar"><div style="width:${a.scores[c.k]}%;background:var(--${tone(a.scores[c.k])})"></div></div></div>`).join("")}</div>
+  </section>`;
+}
+
+function viewEnvision(a){
+  return `${banner()}<h1>Week 1 · Envision your 10.0 self</h1>
+  <p class="lede">Write each area as if it's December 31 and it already happened. Use numbers, and write it in the present or past tense. Every keystroke is scored.</p>
+  <div class="grid2">${AREAS.map(ar=>{ const v=S.vision[ar.k]; const r=visionCheck(v.ten); return `
+    <section class="panel"><div class="area-head"><h2>${ar.name}</h2><span id="sc-${ar.k}">${scoreTag(r.score)}</span></div>
+      <label for="now-${ar.k}">Where I am now</label><textarea id="now-${ar.k}" data-path="vision.${ar.k}.now">${esc(v.now)}</textarea>
+      <label for="ten-${ar.k}">My 10.0 self (already true)</label><textarea id="ten-${ar.k}" data-path="vision.${ar.k}.ten" data-live="${ar.k}" placeholder="${esc(ar.eg)}">${esc(v.ten)}</textarea>
+      <div id="fb-${ar.k}">${fbList(r.fb)}</div>
+      <label for="why-${ar.k}">Why it matters / how it will feel</label><textarea id="why-${ar.k}" data-path="vision.${ar.k}.why" style="min-height:48px">${esc(v.why)}</textarea>
+    </section>`;}).join("")}</div>
+  <section class="panel" style="margin-top:16px"><h2>Vision board prompt</h2>
+    <p class="hint">Paste this into an image model with a photo of yourself. Set the result as your wallpaper and check in with it 3 times a day.</p>
+    <textarea id="vbPrompt" readonly style="min-height:120px">${esc(vbPrompt())}</textarea>
+    <div class="row" style="margin-top:8px"><button data-act="copyvb">Copy prompt</button></div>
+  </section>`;
+}
+function vbPrompt(){
+  const lines = AREAS.map(a=>`${a.name}: ${S.vision[a.k].ten||"(not set)"}`).join("\n");
+  return `I want to see what my life looks like 6 months from now. Here is my vision:\n${lines}\nAsk me about any gaps you need filled for context, then create a hyperrealistic image that puts me inside that life so I can see myself living it every day.`;
+}
+
+function listEditor(key, title, placeholder, hint){
+  return `<section class="panel"><h2>${title}</h2><p class="hint">${hint}</p>
+    <div class="stack" style="gap:6px">${S[key].map((t,i)=>`<div class="row" style="flex-wrap:nowrap"><input id="${key}-${i}" data-list="${key}" data-i="${i}" value="${esc(t)}" aria-label="${title} ${i+1}"><button class="ghost" data-del="${key}" data-i="${i}" aria-label="Remove">✕</button></div>`).join("")}</div>
+    <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input id="new-${key}" placeholder="${esc(placeholder)}"><button data-add="${key}">Add</button></div></section>`;
+}
+function viewIdentity(a){
+  return `${banner()}<h1>Week 1 · Have, Be, Do</h1>
+  <p class="lede">Your "Have" is your vision. Now decide who you need to be (Be) and what that person does every day (Do). Your habits are what make the identity real.</p>
+  <section class="panel"><div class="area-head"><h2>Have (from your vision)</h2>${scoreTag(a.scores.thoughts)}</div>
+    <ul class="list">${AREAS.map(ar=>`<li><b>${ar.name}</b>${esc(S.vision[ar.k].ten||"Not written yet")}</li>`).join("")}</ul></section>
+  <div class="grid2" style="margin-top:16px">
+    ${listEditor("be","Be: I am…","I am an athlete","Start each one with \"I am\". Write it even if you have no proof yet.")}
+    ${listEditor("doo","Do: habits of that person","I don't drink on weeknights","What does the person who already has your goals do every day?")}
+  </div>
+  <section class="panel" style="margin-top:16px"><div class="area-head"><h2>Identity check</h2>${scoreTag(a.scores.identity)}</div>
+    <div class="mini" style="margin-top:6px"><span class="n">Habits (${S.doo.length})</span><span class="arr">→</span><span class="n">Identity (${S.be.filter(b=>/^\s*i\s*am/i.test(b)).length})</span><span class="arr">→</span><span class="n">Goals (${AREAS.filter(x=>S.vision[x.k].ten.trim()).length}/4)</span></div></section>`;
+}
+
+function seg(id, field, val, opts){
+  return `<div class="seg" role="group">${opts.map(([v,l,c])=>`<button type="button" class="${c}" aria-pressed="${val===v}" data-seg="${id}" data-field="${field}" data-val="${v}">${l}</button>`).join("")}</div>`;
+}
+function viewDelete(a){
+  const x=a.extra; const neutral=Math.max(0,x.total-x.green-x.redH);
+  const pct=(n)=> x.total? (n/x.total*100):0;
+  return `${banner()}<h1>Week 2 · Delete</h1>
+  <p class="lede">You can't build a new life on top of the old one. Log your week, mark what supports your vision in green and what pulls you away in red, then make a plan for every red item.</p>
+  <section class="panel"><div class="area-head"><h2>Time audit (hours per week)</h2><span class="num hint">${x.total} / 168 h</span></div>
+    ${x.total?`<div class="split" style="margin:8px 0 4px"><div style="width:${pct(x.green)}%;background:var(--good)">${x.green?x.green+"h":""}</div><div style="width:${pct(neutral)}%;background:var(--muted)">${neutral?neutral+"h":""}</div><div style="width:${pct(x.redH)}%;background:var(--bad)">${x.redH?x.redH+"h":""}</div></div>`:""}
+    <div class="tbl"><table><thead><tr><th>Activity</th><th style="width:80px">Hours</th><th>Supports?</th><th>Plan</th><th></th></tr></thead><tbody>
+    ${S.time.map(t=>`<tr><td><input id="ta-${t.id}" data-row="time" data-id="${t.id}" data-field="activity" value="${esc(t.activity)}" aria-label="Activity"></td>
+      <td><input id="th-${t.id}" class="num" type="number" min="0" data-row="time" data-id="${t.id}" data-field="hours" value="${esc(t.hours)}" aria-label="Hours"></td>
+      <td>${seg(t.id,"time.tag",t.tag,[["green","Pushes","g"],["neutral","Neutral","n"],["red","Pulls","r"]])}</td>
+      <td>${t.tag==="red"?seg(t.id,"time.plan",t.plan,[["cut","Cut","a"],["friction","Add friction","a"],["keep","Keep","n"]]):`<span class="hint">—</span>`}</td>
+      <td><button class="ghost" data-delrow="time" data-id="${t.id}" aria-label="Remove">✕</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="row" style="margin-top:8px"><button data-addrow="time">Add activity</button><span class="hint">Tip: set a timer and log every 15 minutes for one week.</span></div>
+  </section>
+  <section class="panel" style="margin-top:16px"><div class="area-head"><h2>Friend inventory (last 60 days)</h2><span class="num hint">${x.pTotal? Math.round(x.ampH/x.pTotal*100)+"% amplifier time":""}</span></div>
+    <label for="traits">Traits of people aligned with my goals</label><input id="traits" data-path="traits" value="${esc(S.traits)}" placeholder="positive, driven, kind">
+    <div class="tbl" style="margin-top:10px"><table><thead><tr><th>Person</th><th style="width:80px">Hrs/wk</th><th>Type</th><th></th></tr></thead><tbody>
+    ${S.people.map(p=>`<tr><td><input id="pn-${p.id}" data-row="people" data-id="${p.id}" data-field="name" value="${esc(p.name)}" aria-label="Name"></td>
+      <td><input id="ph-${p.id}" class="num" type="number" min="0" data-row="people" data-id="${p.id}" data-field="hours" value="${esc(p.hours)}" aria-label="Hours"></td>
+      <td>${seg(p.id,"people.type",p.type,[["amp","Amplifier","g"],["vamp","Vampire","r"]])}</td>
+      <td><button class="ghost" data-delrow="people" data-id="${p.id}" aria-label="Remove">✕</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="row" style="margin-top:8px"><button data-addrow="people">Add person</button><span class="hint">Social media test: if you saw them at the mall, would you pretend not to? Unfollow.</span></div>
+  </section>`;
+}
+
+function viewInstall(a){
+  return `${banner()}<h1>Week 3 · Install</h1>
+  <p class="lede">Make the good things easy. Design your space, upgrade your inputs, and lock in 1-2 non-negotiables each for mind, body and business. Start embarrassingly small.</p>
+  <section class="panel"><div class="area-head"><h2>Daily non-negotiables</h2>${scoreTag(a.scores.habits)}</div>
+    <div class="stack">${S.nonneg.map(n=>{
+      const miss=[!n.tiny.trim()&&"tiny version",!n.anchor.trim()&&"anchor",!n.stake.trim()&&"stake"].filter(Boolean);
+      return `<div class="panel" style="background:var(--bg)">
+      <div class="row" style="justify-content:space-between"><div class="chips">${miss.length?miss.map(m=>`<span class="chip bad">missing ${m}</span>`).join(""):`<span class="chip good">ready</span>`}${n.habit.split(/\s+/).length>10?`<span class="chip warn">too big</span>`:""}</div><button class="ghost" data-delrow="nonneg" data-id="${n.id}" aria-label="Remove">✕</button></div>
+      <div class="grid3">
+        <div><label for="nh-${n.id}">Habit</label><input id="nh-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="habit" value="${esc(n.habit)}"></div>
+        <div><label for="na-${n.id}">Area</label><select id="na-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="area">${["mind","body","business"].map(o=>`<option ${n.area===o?"selected":""}>${o}</option>`).join("")}</select></div>
+        <div><label for="nt-${n.id}">Tiny version</label><input id="nt-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="tiny" value="${esc(n.tiny)}" placeholder="1 page / 10 push-ups"></div>
+        <div><label for="nk-${n.id}">Stack it: after I…</label><input id="nk-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="anchor" value="${esc(n.anchor)}" placeholder="After I brush my teeth"></div>
+        <div><label for="nr-${n.id}">Reward</label><input id="nr-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="reward" value="${esc(n.reward)}"></div>
+        <div><label for="ns-${n.id}">Stake (what it costs to miss)</label><input id="ns-${n.id}" data-row="nonneg" data-id="${n.id}" data-field="stake" value="${esc(n.stake)}" placeholder="$100 to a friend"></div>
+      </div></div>`;}).join("")}</div>
+    <div class="row" style="margin-top:10px"><button data-addrow="nonneg">Add non-negotiable</button>${S.doo.length?`<span class="hint">From your Do list:</span>${S.doo.filter(d=>!S.nonneg.some(n=>n.habit===d)).slice(0,3).map(d=>`<button data-promote="${esc(d)}">+ ${esc(d.slice(0,32))}</button>`).join("")}`:""}</div>
+  </section>
+  <section class="panel" style="margin-top:16px"><h2>Environment</h2><p class="hint">Make it automatic: change your space, your inputs and the rooms you're in.</p>
+    <div class="tbl"><table><tbody>${S.env.map(e=>`<tr><td style="width:150px"><select id="ek-${e.id}" data-row="env" data-id="${e.id}" data-field="kind" aria-label="Kind">${[["space","Space"],["input","Input / feed"],["room","People / room"]].map(([v,l])=>`<option value="${v}" ${e.kind===v?"selected":""}>${l}</option>`).join("")}</select></td>
+      <td><input id="et-${e.id}" data-row="env" data-id="${e.id}" data-field="text" value="${esc(e.text)}" aria-label="Change"></td><td style="width:40px"><button class="ghost" data-delrow="env" data-id="${e.id}" aria-label="Remove">✕</button></td></tr>`).join("")}</tbody></table></div>
+    <div class="row" style="margin-top:8px"><button data-addrow="env">Add change</button><span class="chips">${["space","input","room"].map(k=>`<span class="chip ${S.env.some(e=>e.kind===k&&e.text.trim())?"good":"bad"}">${k}</span>`).join("")}</span></div>
+  </section>`;
+}
+
+function sparkline(h){
+  const pts=h.filter(p=>!isNaN(parseFloat(p.value))); if(pts.length<2) return `<p class="hint">Log at least two values to see a trend.</p>`;
+  const W=520,H=120,P=28; const vs=pts.map(p=>+p.value); let mn=Math.min(...vs), mx=Math.max(...vs);
+  const tg=parseFloat(S.track.target); if(!isNaN(tg)){ mn=Math.min(mn,tg); mx=Math.max(mx,tg); } if(mn===mx){mn-=1;mx+=1;}
+  const X=i=>P+i*(W-2*P)/(pts.length-1), Y=v=>H-P/1.5-(v-mn)/(mx-mn)*(H-P*1.4);
+  const d=pts.map((p,i)=>`${i?"L":"M"}${X(i)},${Y(+p.value)}`).join(" ");
+  const area=d+` L${X(pts.length-1)},${H-8} L${X(0)},${H-8} Z`;
+  const last=pts[pts.length-1];
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto" role="img" aria-label="North star trend">
+    ${!isNaN(tg)?`<line x1="${P}" x2="${W-P}" y1="${Y(tg)}" y2="${Y(tg)}" stroke="var(--good)" stroke-dasharray="4 4"/><text x="${W-P}" y="${Y(tg)-4}" text-anchor="end" font-size="11" fill="var(--good)">target ${tg}</text>`:""}
+    <path d="${area}" fill="var(--soft)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <circle cx="${X(pts.length-1)}" cy="${Y(+last.value)}" r="4.5" fill="var(--accent)"/>
+    <text x="${X(pts.length-1)}" y="${Y(+last.value)-9}" text-anchor="end" font-size="12" fill="var(--ink)" style="font-family:var(--f-mono)">${last.value}</text>
+    <text x="${P}" y="${H-2}" font-size="10" fill="var(--muted)">${pts[0].date}</text><text x="${W-P}" y="${H-2}" text-anchor="end" font-size="10" fill="var(--muted)">${last.date}</text></svg></div>`;
+}
+function viewTrack(a){
+  const t=S.track; const days=[...Array(14)].map((_,i)=>dayKey(13-i));
+  const alerts=a.change.filter(c=>c.area==="Never miss twice");
+  return `${banner()}<h1>Week 4 · Track</h1>
+  <p class="lede">Most people don't quit because they fail. They quit because they can't see that they're winning. Keep score every day at the same time.</p>
+  ${alerts.map(x=>`<div class="alert" style="margin-bottom:12px">${esc(x.msg)}</div>`).join("")}
+  <section class="panel"><div class="area-head"><h2>North Star metric</h2>${scoreTag(a.scores.reality)}</div>
+    <div class="grid3">
+      <div><label for="tm">Metric</label><input id="tm" data-path="track.metric" value="${esc(t.metric)}" placeholder="Body weight / revenue / pages"></div>
+      <div><label for="tu">Unit</label><input id="tu" data-path="track.unit" value="${esc(t.unit)}" placeholder="kg / $ / pages"></div>
+      <div><label for="tc">Current</label><div class="row" style="flex-wrap:nowrap"><input id="tc" class="num" type="number" data-path="track.current" value="${esc(t.current)}"><button data-act="logmetric">Log</button></div></div>
+      <div><label for="ts">Start</label><input id="ts" class="num" type="number" data-path="track.start" value="${esc(t.start)}"></div>
+      <div><label for="tt">Target</label><input id="tt" class="num" type="number" data-path="track.target" value="${esc(t.target)}"></div>
+      <div><label>Progress</label><div class="bar" style="margin-top:12px"><div style="width:${Math.round((a.extra.prog||0)*100)}%"></div></div><span class="num hint">${a.extra.prog==null?"set start, target and current":Math.round(a.extra.prog*100)+"%"}</span></div>
+    </div>
+    <div style="margin-top:12px">${sparkline(t.history)}</div>
+  </section>
+  <section class="panel" style="margin-top:16px"><div class="area-head"><h2>Daily scorecard</h2><span class="num hint">7-day: ${Math.round(a.extra.consistency*100)}%</span></div>
+    ${S.nonneg.length?`<div style="overflow-x:auto"><div class="grid-days" style="min-width:520px">
+      <div></div>${days.map(d=>`<div class="hd">${new Date(d+"T12:00").toLocaleDateString([], {weekday:"narrow"})}<br>${d.slice(8)}</div>`).join("")}
+      ${S.nonneg.map(n=>`<div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(n.habit)}">${esc(n.tiny||n.habit)}</div>${days.map(d=>{const on=(S.checks[d]||[]).includes(n.id);return `<button class="cell ${on?"on":""} ${d===today()?"today":""}" data-check="${d}" data-id="${n.id}" aria-pressed="${on}" aria-label="${esc(n.habit)} on ${d}"></button>`;}).join("")}`).join("")}
+    </div></div><p class="hint">Click a square to mark it done. Rule: never miss twice in a row.</p>`:`<p class="hint">Add non-negotiables in Week 3 to track them here.</p>`}
+  </section>
+  <section class="panel" style="margin-top:16px"><h2>Friday review</h2>
+    <div class="grid2"><div><label for="rw">Win this week</label><input id="rw" placeholder="Hit the gym 4 times"></div><div><label for="ra">1-2 changes for next week</label><input id="ra" placeholder="Phone out of the bedroom"></div></div>
+    <div class="row" style="margin-top:8px"><button class="primary" data-act="review">Save review</button></div>
+    <ul class="list" style="margin-top:12px">${[...S.reviews].reverse().slice(0,6).map(r=>`<li><b>${r.date}</b>Win: ${esc(r.win)} · Change: ${esc(r.adjust)}</li>`).join("")}</ul>
+  </section>
+  <section class="panel" style="margin-top:16px"><h2>Run the loop again</h2><p class="hint">After six months, start a new cycle with a bigger vision. Your current goals become the new starting point.</p><button data-act="loop">Start a new cycle</button></section>`;
+}
+
+/* ---------- Render + events ---------- */
+function render(){
+  if(!S) return;
+  const h = location.hash.slice(1); current = SECTIONS.some(s=>s.id===h)? h : "clarity";
+  const a = analyze(S);
+  renderNav(a);
+  const v = {clarity:viewClarity, envision:viewEnvision, identity:viewIdentity, delete:viewDelete, install:viewInstall, track:viewTrack}[current];
+  $("#main").innerHTML = v(a);
+}
+function setPath(path,val){ const ks=path.split("."); let o=S; ks.slice(0,-1).forEach(k=>o=o[k]); o[ks[ks.length-1]]=val; }
+function touch(){ if(S.example){ S.example=false; } save(); }
+function rerenderKeepFocus(){ const id=document.activeElement?.id, ss=document.activeElement?.selectionStart; render(); if(id){ const el=document.getElementById(id); if(el){ el.focus(); try{ if(ss!=null) el.setSelectionRange(ss,ss); }catch(e){} } } }
+
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.dataset.path){ setPath(el.dataset.path, el.value); touch();
+    if(el.dataset.live){ const k=el.dataset.live, r=visionCheck(el.value); $("#fb-"+k).innerHTML=fbList(r.fb); $("#sc-"+k).innerHTML=scoreTag(r.score); const vb=$("#vbPrompt"); if(vb) vb.value=vbPrompt(); }
+    renderNav(analyze(S)); return; }
+  if(el.dataset.list){ S[el.dataset.list][+el.dataset.i]=el.value; touch(); renderNav(analyze(S)); return; }
+  if(el.dataset.row){ const r=S[el.dataset.row].find(x=>x.id===el.dataset.id); if(r){ r[el.dataset.field]= el.type==="number"? (el.value===""?"":+el.value) : el.value; touch(); }
+    if(el.tagName==="SELECT" || el.type==="number") rerenderKeepFocus(); else renderNav(analyze(S)); }
+});
+document.addEventListener("change",e=>{ if(e.target.dataset.row && e.target.tagName==="SELECT") rerenderKeepFocus(); });
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter" && e.target.id?.startsWith("new-")){ e.preventDefault(); addListItem(e.target.id.slice(4)); }
+  if((e.key==="Enter"||e.key===" ") && e.target.closest?.(".node")){ e.preventDefault(); location.hash=e.target.closest(".node").dataset.go; }
+});
+function addListItem(key){ const inp=$("#new-"+key); const v=inp.value.trim(); if(!v) return; S[key].push(v); touch(); render(); $("#new-"+key)?.focus(); }
+
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button, .node"); if(!b) return;
+  const d=b.dataset;
+  if(d.go){ location.hash=d.go; return; }
+  if(d.add){ addListItem(d.add); return; }
+  if(d.del){ S[d.del].splice(+d.i,1); touch(); render(); return; }
+  if(d.addrow){
+    const t={time:{activity:"",hours:"",tag:"neutral",plan:""},people:{name:"",hours:"",type:"amp"},nonneg:{habit:"",area:"body",tiny:"",anchor:"",reward:"",stake:""},env:{kind:"space",text:""}}[d.addrow];
+    S[d.addrow].push({id:uid(),...t}); touch(); render(); return; }
+  if(d.delrow){ S[d.delrow]=S[d.delrow].filter(x=>x.id!==d.id); touch(); render(); return; }
+  if(d.seg){ const [coll,field]=d.field.split("."); const r=S[coll].find(x=>x.id===d.seg); if(r){ r[field]=d.val; if(field==="tag" && d.val!=="red") r.plan=""; } touch(); render(); return; }
+  if(d.promote){ S.nonneg.push({id:uid(),habit:d.promote,area:"body",tiny:"",anchor:"",reward:"",stake:""}); touch(); render(); return; }
+  if(d.check){ const arr=S.checks[d.check]||(S.checks[d.check]=[]); const i=arr.indexOf(d.id); i>=0?arr.splice(i,1):arr.push(d.id); touch(); render(); return; }
+  switch(d.act){
+    case "clear": S=blank(); save(); location.hash="envision"; render(); toast("Cleared. Start with your vision."); break;
+    case "logmetric": { const v=parseFloat(S.track.current); if(isNaN(v)) return toast("Enter a current value first."); S.track.history=S.track.history.filter(h=>h.date!==today()); S.track.history.push({date:today(),value:v}); touch(); render(); toast("Logged."); break; }
+    case "review": { const w=$("#rw").value.trim(), ad=$("#ra").value.trim(); if(!w&&!ad) return toast("Write a win or a change first."); S.reviews.push({date:today(),win:w,adjust:ad}); touch(); render(); toast("Review saved."); break; }
+    case "loop": {
+      if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="Click again to confirm: this clears your scorecard and audits"; return; }
+      const v=S.vision, be=S.be, doo=S.doo, nn=S.nonneg; S=blank();
+      AREAS.forEach(a=>{ S.vision[a.k].now=v[a.k].ten; S.vision[a.k].why=v[a.k].why; });
+      S.be=be; S.doo=doo; S.nonneg=nn; save(); location.hash="envision"; render(); toast("New cycle started. Dream bigger."); break; }
+    case "copyvb": copyText($("#vbPrompt").value); break;
+    case "copy": copyText(reportText(analyze(S))); break;
+    case "ai": runAI(b); break;
+  }
+});
+function copyText(t){ try{ navigator.clipboard.writeText(t).then(()=>toast("Copied."),()=>toast("Copy blocked. Select the text manually.")); }catch(e){ toast("Copy blocked. Select the text manually."); } }
+function reportText(a){
+  const L=(t,arr)=>t+"\n"+(arr.length?arr.map(x=>`- [${x.area}] ${x.msg}`).join("\n"):"- none");
+  return `CLARITY REPORT: ${a.overall}/100\n${verdictFor(a)}\n\n${CYCLE.map(c=>`${c.name}: ${a.scores[c.k]}`).join(" | ")}\n\n${L("BAD",a.bad)}\n\n${L("CHANGE",a.change)}\n\n${L("GOOD",a.good)}`;
+}
+
+/* ---------- Claude deep read (sample capability) ---------- */
+let aiCtl=null;
+async function runAI(btn){
+  const panel=$("#aiPanel"), out=$("#aiOut");
+  const sample = window.claude?.use ? await claude.use("sample").catch(()=>null) : null;
+  panel.hidden=false;
+  if(!sample){ out.innerHTML=`<p class="hint">Claude isn't available in this view. The rule-based report above still works. Open the page on claude.ai while signed in to use this.</p>`; return; }
+  aiCtl?.abort(); aiCtl=new AbortController();
+  btn.disabled=true; out.innerHTML=`<p class="hint">Reading your plan…</p>`;
+  const a=analyze(S);
+  const data = JSON.parse(JSON.stringify(S)); delete data.example;
+  const prompt = `You are a blunt, practical life coach. The user follows Dan Martell's "4-Week Edit" (Envision, Delete, Install, Track) and models change as the cycle Thoughts → Feelings → Actions → Habits → Identity → Reality, with the core loop Habits → Identity → Goal achieved.
+
+Here is their data as JSON:
+${JSON.stringify(data).slice(0,60000)}
+
+A rule engine scored them: ${JSON.stringify(a.scores)}, overall ${a.overall}/100, weakest link ${a.weakest.name}.
+
+Give them extreme clarity. Be honest, not encouraging for its own sake. No flattery. Keep it under 300 words. Use exactly this format in Markdown:
+**Verdict:** one sentence.
+**What's really going on:** 2-3 sentences naming the pattern across their data, including contradictions (e.g. a vision that their time audit or people list works against).
+**Top 3 problems:** a bulleted list, worst first.
+**Do this week:** 3 concrete actions with numbers, each tied to a specific item they entered.
+**One question to answer honestly:** a single question.`;
+  try{
+    const res = await sample(prompt,{signal:aiCtl.signal, modelTier:"default", cache:false, onText:({text})=>{ out.innerHTML=md(text); }});
+    out.innerHTML=md(res.text);
+  }catch(err){
+    if(err?.name==="AbortError") return;
+    const c=err?.code;
+    out.innerHTML = `<p class="hint">${c==="not_granted"?"You declined access to Claude for this page. The report above still works.":c==="rate_limited"?"Too many requests right now. Try again in a few minutes.":"Couldn't get a read from Claude right now. Try again later."}</p>`;
+  }finally{ btn.disabled=false; }
+}
+function md(t){
+  const lines=esc(t).split(/\n/); let html="", inList=false;
+  for(const raw of lines){ const l=raw.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+    if(/^\s*[-*•]\s+/.test(raw)){ if(!inList){html+="<ul>";inList=true;} html+=`<li>${l.replace(/^\s*[-*•]\s+/,"")}</li>`; }
+    else if(/^\s*\d+\.\s+/.test(raw)){ if(!inList){html+="<ul>";inList=true;} html+=`<li>${l.replace(/^\s*\d+\.\s+/,"")}</li>`; }
+    else { if(inList){html+="</ul>";inList=false;} if(l.trim()) html+=`<p>${l}</p>`; } }
+  return html+(inList?"</ul>":"");
+}
+
+window.addEventListener("hashchange",()=>{ render(); window.scrollTo(0,0); });
+initStore();
+</script>
