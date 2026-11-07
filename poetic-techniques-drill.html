@@ -1,0 +1,317 @@
+<title>Poetic Techniques Drill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: one narrow study column; tabs on top, one working surface below */
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --ink:#18213a; --muted:#5b6478; --line:#d5dae4;
+  --accent:#3046c8; --accent-soft:#e3e7fb; --good:#1d7a4a; --good-soft:#dcf1e5; --bad:#b3322b; --bad-soft:#f8e1df;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,serif;
+  --ui:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151f; --surface:#1a2030; --ink:#e7eaf2; --muted:#9aa3b8; --line:#2d3548;
+  --accent:#8fa0ff; --accent-soft:#252d4f; --good:#5fd394; --good-soft:#173528; --bad:#ff8a80; --bad-soft:#3d1f1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151f; --surface:#1a2030; --ink:#e7eaf2; --muted:#9aa3b8; --line:#2d3548;
+  --accent:#8fa0ff; --accent-soft:#252d4f; --good:#5fd394; --good-soft:#173528; --bad:#ff8a80; --bad-soft:#3d1f1d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,6vw,40px);line-height:1.05;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0}
+.progress{display:flex;flex-direction:column;gap:6px}
+.progress-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar>span{display:block;height:100%;background:var(--good);width:0;transition:width .3s}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.dot{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.dot.half{border-color:var(--accent);color:var(--accent)}
+.dot.full{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+.tabs button{flex:1;font:600 14px var(--ui);padding:10px 8px;border:0;border-radius:7px;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .tabs button[aria-selected="true"]{color:#11151f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tabs button[aria-selected="true"]{color:#11151f}}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.controls label{font-size:13px;color:var(--muted)}
+select,input[type=text]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+input[type=text]{width:100%;font-size:17px}
+.btn{font:600 14px var(--ui);padding:10px 16px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.good{background:var(--good-soft);border-color:var(--good);color:var(--good)}
+.btn.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.btn.small{padding:6px 10px;font-size:13px}
+/* Learn */
+.learn-list{display:flex;flex-direction:column;gap:10px}
+.entry{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:150px 1fr;gap:4px 16px}
+.entry .name{font-family:var(--display);font-weight:700;font-size:19px;grid-row:span 3}
+.field{font-family:var(--body);font-size:16px;min-width:0}
+.field small{display:block;font-family:var(--ui);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.covered{background:var(--line);color:transparent!important;border-radius:4px;cursor:pointer;user-select:none}
+.covered *{color:transparent!important}
+@media (max-width:520px){.entry{grid-template-columns:1fr}.entry .name{grid-row:auto}}
+/* Card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px 20px;display:flex;flex-direction:column;gap:16px;min-height:280px}
+.card .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.prompt{font-family:var(--body);font-size:22px;line-height:1.35;text-wrap:balance}
+.prompt.name{font-family:var(--display);font-weight:700;font-size:34px}
+.answer{border-top:1px dashed var(--line);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.answer .big{font-family:var(--display);font-weight:700;font-size:28px}
+.answer .def{font-family:var(--body);font-size:19px}
+.extra{font-family:var(--body);font-size:15px;color:var(--muted)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.actions .btn{flex:1;min-width:120px}
+.options{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;font:16px var(--body);padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.opt.name{font-family:var(--display);font-weight:600;font-size:18px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.right{background:var(--good-soft);border-color:var(--good)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.feedback{font-weight:600}
+.feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)}
+.done{text-align:center;justify-content:center;align-items:center}
+.done .big{font-family:var(--display);font-weight:700;font-size:30px}
+.foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Poetic Techniques Drill</h1>
+    <p class="sub">Your term sheet, word for word. Learn it, then test both ways: definition → name and name → definition.</p>
+  </header>
+
+  <section class="progress" aria-label="Progress">
+    <div class="progress-row"><span>Memorised (both directions)</span><span id="progText">0 / 9</span></div>
+    <div class="bar"><span id="progBar"></span></div>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-learn" aria-selected="true" data-view="learn">Learn</button>
+    <button role="tab" id="tab-recall" aria-selected="false" data-view="recall">Recall</button>
+    <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Quiz</button>
+  </nav>
+
+  <!-- LEARN -->
+  <section id="view-learn" class="view">
+    <div class="controls" style="margin-bottom:12px">
+      <label for="cover">Cover up:</label>
+      <select id="cover">
+        <option value="none">Nothing (read it)</option>
+        <option value="name">Names</option>
+        <option value="def">Definitions</option>
+        <option value="all">Everything but names</option>
+      </select>
+      <span style="font-size:13px;color:var(--muted)">Say it, then tap a grey box to check.</span>
+    </div>
+    <div class="learn-list" id="learnList"></div>
+  </section>
+
+  <!-- RECALL -->
+  <section id="view-recall" class="view" hidden>
+    <div class="controls" style="margin-bottom:12px">
+      <label for="recallDir">Show me:</label>
+      <select id="recallDir">
+        <option value="mixed">Mixed (both ways)</option>
+        <option value="d2n">Definition → I say the name</option>
+        <option value="n2d">Name → I say the definition</option>
+        <option value="e2n">Example → I say the name</option>
+      </select>
+    </div>
+    <div class="card" id="recallCard"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="view-quiz" class="view" hidden>
+    <div class="controls" style="margin-bottom:12px">
+      <label for="quizDir">Questions:</label>
+      <select id="quizDir">
+        <option value="mixed">Mixed (both ways)</option>
+        <option value="d2n">Definition → pick the name</option>
+        <option value="n2d">Name → pick the definition</option>
+        <option value="type">Definition → type the name</option>
+      </select>
+    </div>
+    <div class="card" id="quizCard"></div>
+  </section>
+
+  <div class="foot">
+    <span>Got it twice in a row = memorised for that direction. Misses come back sooner.</span>
+    <button class="linkbtn" id="reset">Reset progress</button>
+  </div>
+</div>
+
+<script>
+const T = [
+  {n:"Alliteration", d:"Repetition of sounds at the beginning of words.", e:"She Sells Sea Shells.", f:"Sound Effect- quicker rhythm."},
+  {n:"Assonance", d:"Repetition of the same vowel sound", e:"Purple Curtain", f:"Sound Effect- Gives the reader the ability to hear the sentence and imagine the image."},
+  {n:"Couplet", d:"Two lines of poetry paired together by rhyme", e:"Here and Year examples of rhyming in a poem.", f:"Gives the poem a rhythmic quality."},
+  {n:"Metaphor", d:"Comparing two things, as if one actually is the other", e:"A four foot box, a foot for every year= Coffin.", f:"Helps the reader to connect with the item and imagine it."},
+  {n:"Onomatopoeia", d:"When the sound of a word echoes or suggests its meaning", e:"Bang, Crash.", f:"Gives a sound effect to the poem, making it more interesting."},
+  {n:"Hyperbole", d:"When a poet uses exaggeration to get their point across.", e:"I have been waiting here for years.", f:"To add humour or make the reader more interested."},
+  {n:"Personification", d:"Objects are given human characteristics for effect", e:"The car roared.", f:"Adds more of a lifelike feel and creates an image."},
+  {n:"Simile", d:"Comparing two things, using ‘like’ or ‘as’.", e:"As white as snow.", f:"Creates a vivid image."},
+  {n:"Symbolism", d:"Use of one thing to represent another", e:"Light= A symbol of hope, happiness.", f:"Makes the reader think."}
+];
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+/* ---- progress: streak per term per direction ---- */
+const KEY = "ptd-progress-v1";
+let P = {};
+try { P = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) { P = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {} };
+const k = (i, dir) => i + ":" + (dir === "n2d" ? "n2d" : "d2n"); // example→name counts toward d2n
+const streak = (i, dir) => (P[k(i,dir)] || 0);
+function mark(i, dir, ok){ P[k(i,dir)] = ok ? streak(i,dir)+1 : 0; save(); renderProgress(); }
+const known = (i, dir) => streak(i,dir) >= 2;
+function renderProgress(){
+  let full = 0;
+  $("dots").innerHTML = T.map((t,i) => {
+    const a = known(i,"d2n"), b = known(i,"n2d");
+    if (a && b) full++;
+    const cls = a && b ? "full" : (a || b ? "half" : "");
+    const tip = `${t.n}: definition→name ${a?"✓":"…"}, name→definition ${b?"✓":"…"}`;
+    return `<span class="dot ${cls}" title="${esc(tip)}">${esc(t.n)}</span>`;
+  }).join("");
+  $("progText").textContent = `${full} / ${T.length}`;
+  $("progBar").style.width = (full / T.length * 100) + "%";
+}
+
+/* ---- tabs ---- */
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-" + b.dataset.view);
+}));
+
+/* ---- LEARN ---- */
+function renderLearn(){
+  const c = $("cover").value;
+  const cov = which => (c === "name" && which === "n") || ((c === "def") && which === "d") || (c === "all" && which !== "n");
+  $("learnList").innerHTML = T.map(t => `
+    <article class="entry">
+      <div class="name ${cov("n")?"covered":""}">${esc(t.n)}</div>
+      <div class="field ${cov("d")?"covered":""}"><small>Definition</small>${esc(t.d)}</div>
+      <div class="field ${cov("e")?"covered":""}"><small>Example</small>${esc(t.e)}</div>
+      <div class="field ${cov("f")?"covered":""}"><small>Effect</small>${esc(t.f)}</div>
+    </article>`).join("");
+}
+$("cover").addEventListener("change", renderLearn);
+$("learnList").addEventListener("click", e => { const el = e.target.closest(".covered"); if (el) el.classList.remove("covered"); });
+
+/* ---- queue: weakest first; misses re-inserted a few places later ---- */
+function makeQueue(mode){
+  const dirs = mode === "mixed" ? ["d2n","n2d"] : [mode];
+  const items = [];
+  T.forEach((_,i) => dirs.forEach(d => items.push({i, d})));
+  const s = it => streak(it.i, it.d === "type" || it.d === "e2n" ? "d2n" : it.d);
+  return shuffle(items).sort((a,b) => s(a) - s(b));
+}
+const reinsert = (q, it) => q.splice(Math.min(3, q.length), 0, it);
+
+/* ---- RECALL (self-check) ---- */
+let rq = [], rCur = null, rDone = 0;
+function startRecall(){ rq = makeQueue($("recallDir").value); rDone = 0; nextRecall(); }
+function nextRecall(){
+  rCur = rq.shift();
+  const card = $("recallCard");
+  if (!rCur){
+    card.className = "card done";
+    card.innerHTML = `<div class="big">Round done</div><p class="extra">Every card answered correctly once this round.</p><button class="btn primary" id="rAgain">Go again</button>`;
+    $("rAgain").onclick = startRecall; return;
+  }
+  card.className = "card";
+  const t = T[rCur.i], d = rCur.d;
+  const label = {d2n:"Definition — say the name", n2d:"Name — say the definition", e2n:"Example — say the name"}[d];
+  const prompt = d === "n2d" ? `<div class="prompt name">${esc(t.n)}</div>` : `<div class="prompt">${esc(d === "e2n" ? t.e : t.d)}</div>`;
+  card.innerHTML = `<div class="meta"><span>${label}</span><span>${rq.length + 1} left</span></div>
+    ${prompt}
+    <div class="actions"><button class="btn primary" id="rShow">Show answer</button></div>`;
+  $("rShow").onclick = showRecall; $("rShow").focus({preventScroll:true});
+}
+function showRecall(){
+  const t = T[rCur.i], d = rCur.d;
+  const ans = d === "n2d"
+    ? `<div class="def">${esc(t.d)}</div><div class="extra">e.g. ${esc(t.e)} · ${esc(t.f)}</div>`
+    : `<div class="big">${esc(t.n)}</div><div class="extra">${d === "e2n" ? esc(t.d) : "e.g. " + esc(t.e)}</div>`;
+  const acts = $("recallCard").querySelector(".actions");
+  acts.insertAdjacentHTML("beforebegin", `<div class="answer">${ans}</div>`);
+  acts.innerHTML = `<button class="btn bad" id="rMiss">Missed it</button><button class="btn good" id="rGot">Got it</button>`;
+  $("rGot").onclick = () => { mark(rCur.i, rCur.d, true); nextRecall(); };
+  $("rMiss").onclick = () => { mark(rCur.i, rCur.d, false); reinsert(rq, rCur); nextRecall(); };
+  $("rGot").focus({preventScroll:true});
+}
+$("recallDir").addEventListener("change", startRecall);
+
+/* ---- QUIZ ---- */
+let qq = [], qCur = null, score = 0, asked = 0;
+function startQuiz(){ qq = makeQueue($("quizDir").value); score = 0; asked = 0; nextQuiz(); }
+function lev(a,b){ const m=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t;}} return m[b.length]; }
+function nextQuiz(){
+  qCur = qq.shift();
+  const card = $("quizCard");
+  if (!qCur){
+    card.className = "card done";
+    card.innerHTML = `<div class="big">${score} / ${asked} first try</div><p class="extra">Missed questions were repeated until you got them.</p><button class="btn primary" id="qAgain">New quiz</button>`;
+    $("qAgain").onclick = startQuiz; return;
+  }
+  card.className = "card";
+  const t = T[qCur.i], d = qCur.d;
+  const meta = `<div class="meta"><span>${d === "n2d" ? "Pick the definition" : d === "type" ? "Type the name" : "Pick the name"}</span><span>${qq.length + 1} left</span></div>`;
+  if (d === "type"){
+    card.innerHTML = `${meta}<div class="prompt">${esc(t.d)}</div>
+      <form id="typeForm" class="options" autocomplete="off"><input type="text" id="typeIn" placeholder="Technique name" aria-label="Technique name" autocapitalize="off" spellcheck="false"><button class="btn primary">Check</button></form>
+      <div id="qFb"></div>`;
+    $("typeForm").onsubmit = ev => { ev.preventDefault(); checkTyped(); };
+    $("typeIn").focus({preventScroll:true});
+    return;
+  }
+  const wrong = shuffle(T.map((_,j)=>j).filter(j => j !== qCur.i)).slice(0,3);
+  const opts = shuffle([qCur.i, ...wrong]);
+  const isN = d === "n2d";
+  card.innerHTML = `${meta}${isN ? `<div class="prompt name">${esc(t.n)}</div>` : `<div class="prompt">${esc(t.d)}</div>`}
+    <div class="options">${opts.map(j => `<button class="opt ${isN ? "" : "name"}" data-j="${j}">${esc(isN ? T[j].d : T[j].n)}</button>`).join("")}</div>
+    <div id="qFb"></div>`;
+  card.querySelectorAll(".opt").forEach(b => b.onclick = () => pick(+b.dataset.j, b));
+}
+function finish(ok, extraHtml){
+  if (!qCur.retry) { asked++; if (ok) score++; }
+  mark(qCur.i, qCur.d === "type" ? "d2n" : qCur.d, ok);
+  if (!ok) { qCur.retry = true; reinsert(qq, qCur); }
+  $("qFb").innerHTML = `<div class="answer"><div class="feedback ${ok?"ok":"no"}">${ok ? "Correct" : "Not quite — this one comes back."}</div>${extraHtml}
+    <div class="actions"><button class="btn primary" id="qNext">Next</button></div></div>`;
+  $("qNext").onclick = nextQuiz; $("qNext").focus({preventScroll:true});
+}
+function pick(j, btn){
+  const ok = j === qCur.i;
+  $("quizCard").querySelectorAll(".opt").forEach(b => { b.disabled = true; if (+b.dataset.j === qCur.i) b.classList.add("right"); });
+  if (!ok) btn.classList.add("wrong");
+  const t = T[qCur.i];
+  finish(ok, `<div class="extra"><strong>${esc(t.n)}</strong> — e.g. ${esc(t.e)}</div>`);
+}
+function checkTyped(){
+  const t = T[qCur.i];
+  const v = $("typeIn").value.trim().toLowerCase(), a = t.n.toLowerCase();
+  if (!v) return;
+  const ok = lev(v, a) <= (a.length > 8 ? 3 : 2); // spelling doesn't need to be perfect
+  $("typeIn").disabled = true; $("typeForm").querySelector("button").disabled = true;
+  finish(ok, `<div class="big">${esc(t.n)}</div><div class="extra">e.g. ${esc(t.e)}</div>`);
+}
+$("quizDir").addEventListener("change", startQuiz);
+
+$("reset").onclick = () => {
+  const b = $("reset");
+  if (b.dataset.confirm){ P = {}; save(); renderProgress(); b.textContent = "Reset progress"; delete b.dataset.confirm; startRecall(); startQuiz(); }
+  else { b.dataset.confirm = 1; b.textContent = "Tap again to wipe progress"; setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.textContent = "Reset progress"; } }, 3000); }
+};
+
+renderLearn(); renderProgress(); startRecall(); startQuiz();
+</script>
