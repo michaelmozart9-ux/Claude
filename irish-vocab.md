@@ -41,8 +41,8 @@ Spellings are the standard Irish forms of what's written. Lines marked ⚠ were 
 | 10 | Grafaic | Graphics |
 | 11 | Stair | History |
 | 12 | Corpoideachas (written "Oideachas coirp") | Physical education |
-| 13 | OSPS / CSPE | CSPE |
-| 14 | OSPS / SPHE | SPHE |
+| 13 | OSSP | CSPE |
+| 14 | OSPS | SPHE |
 | 15 | Bitheolaíocht | Biology |
 | 16 | Ceimic | Chemistry |
 | 17 | Fisic | Physics |

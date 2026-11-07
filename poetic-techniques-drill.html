@@ -95,108 +95,63 @@ section.page{display:flex;flex-direction:column;gap:20px}
 <div class="wrap">
   <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
 
-  <!-- HOME -->
-  <section id="page-home" class="page">
-    <header>
-      <h1>Revision Hub</h1>
-      <p class="sub">Pick a subject.</p>
-    </header>
-    <div class="tiles">
-      <a class="tile" href="#english"><span class="tile-name">English</span><span class="tile-meta">1 topic</span></a>
-      <a class="tile" href="#irish"><span class="tile-name">Irish</span><span class="tile-meta">No topics yet</span></a>
+  <!-- HOME / SUBJECT PAGES (filled by script) -->
+  <section id="page-menu" class="page">
+    <header><h1 id="menuTitle">Revision Hub</h1><p class="sub" id="menuSub">Pick a subject.</p></header>
+    <div class="tiles" id="menuTiles"></div>
+  </section>
+
+  <!-- DECK (any topic) -->
+  <div id="page-deck" class="page" hidden style="display:flex;flex-direction:column;gap:20px">
+    <header><h1 id="deckTitle"></h1><p class="sub" id="deckSub"></p></header>
+
+    <section class="progress" aria-label="Progress">
+      <div class="progress-row"><span>Memorised (both directions)</span><span id="progText"></span></div>
+      <div class="bar"><span id="progBar"></span></div>
+      <div class="dots" id="dots"></div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button role="tab" id="tab-learn" aria-selected="true" data-view="learn">Learn</button>
+      <button role="tab" id="tab-recall" aria-selected="false" data-view="recall">Recall</button>
+      <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Quiz</button>
+    </nav>
+
+    <section id="view-learn" class="view">
+      <div class="controls" style="margin-bottom:12px">
+        <label for="cover">Cover up:</label>
+        <select id="cover"></select>
+        <span style="font-size:13px;color:var(--muted)">Say it, then tap a grey box to check.</span>
+      </div>
+      <div class="learn-list" id="learnList"></div>
+    </section>
+
+    <section id="view-recall" class="view" hidden>
+      <div class="controls" style="margin-bottom:12px">
+        <label for="recallDir">Show me:</label>
+        <select id="recallDir"></select>
+      </div>
+      <div class="card" id="recallCard"></div>
+    </section>
+
+    <section id="view-quiz" class="view" hidden>
+      <div class="controls" style="margin-bottom:12px">
+        <label for="quizDir">Questions:</label>
+        <select id="quizDir"></select>
+      </div>
+      <div class="card" id="quizCard"></div>
+    </section>
+
+    <div class="foot">
+      <span>Got it twice in a row = memorised for that direction. Misses come back sooner.</span>
+      <button class="linkbtn" id="reset">Reset progress</button>
     </div>
-  </section>
-
-  <!-- ENGLISH -->
-  <section id="page-english" class="page" hidden>
-    <header>
-      <h1>English</h1>
-      <p class="sub">What do you want to study?</p>
-    </header>
-    <div class="tiles">
-      <a class="tile" href="#poetic-techniques"><span class="tile-name">Poetic Techniques</span><span class="tile-meta" id="ptMeta">9 terms</span></a>
-    </div>
-  </section>
-
-  <!-- IRISH -->
-  <section id="page-irish" class="page" hidden>
-    <header>
-      <h1>Irish</h1>
-      <p class="sub">No topics yet. Send me a term sheet and I'll add it here.</p>
-    </header>
-  </section>
-
-  <!-- POETIC TECHNIQUES -->
-  <div id="page-poetic-techniques" class="page" hidden style="display:flex;flex-direction:column;gap:20px">
-  <header>
-    <h1>Poetic Techniques</h1>
-    <p class="sub">Your term sheet, word for word. Learn it, then test both ways: definition → name and name → definition.</p>
-  </header>
-
-  <section class="progress" aria-label="Progress">
-    <div class="progress-row"><span>Memorised (both directions)</span><span id="progText">0 / 9</span></div>
-    <div class="bar"><span id="progBar"></span></div>
-    <div class="dots" id="dots"></div>
-  </section>
-
-  <nav class="tabs" role="tablist">
-    <button role="tab" id="tab-learn" aria-selected="true" data-view="learn">Learn</button>
-    <button role="tab" id="tab-recall" aria-selected="false" data-view="recall">Recall</button>
-    <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Quiz</button>
-  </nav>
-
-  <!-- LEARN -->
-  <section id="view-learn" class="view">
-    <div class="controls" style="margin-bottom:12px">
-      <label for="cover">Cover up:</label>
-      <select id="cover">
-        <option value="none">Nothing (read it)</option>
-        <option value="name">Names</option>
-        <option value="def">Definitions</option>
-        <option value="all">Everything but names</option>
-      </select>
-      <span style="font-size:13px;color:var(--muted)">Say it, then tap a grey box to check.</span>
-    </div>
-    <div class="learn-list" id="learnList"></div>
-  </section>
-
-  <!-- RECALL -->
-  <section id="view-recall" class="view" hidden>
-    <div class="controls" style="margin-bottom:12px">
-      <label for="recallDir">Show me:</label>
-      <select id="recallDir">
-        <option value="mixed">Mixed (both ways)</option>
-        <option value="d2n">Definition → I say the name</option>
-        <option value="n2d">Name → I say the definition</option>
-        <option value="e2n">Example → I say the name</option>
-      </select>
-    </div>
-    <div class="card" id="recallCard"></div>
-  </section>
-
-  <!-- QUIZ -->
-  <section id="view-quiz" class="view" hidden>
-    <div class="controls" style="margin-bottom:12px">
-      <label for="quizDir">Questions:</label>
-      <select id="quizDir">
-        <option value="mixed">Mixed (both ways)</option>
-        <option value="d2n">Definition → pick the name</option>
-        <option value="n2d">Name → pick the definition</option>
-        <option value="type">Definition → type the name</option>
-      </select>
-    </div>
-    <div class="card" id="quizCard"></div>
-  </section>
-
-  <div class="foot">
-    <span>Got it twice in a row = memorised for that direction. Misses come back sooner.</span>
-    <button class="linkbtn" id="reset">Reset progress</button>
-  </div>
   </div>
 </div>
 
 <script>
-const T = [
+/* ================= CONTENT ================= */
+const POETIC = [
   {n:"Alliteration", d:"Repetition of sounds at the beginning of words.", e:"She Sells Sea Shells.", f:"Sound Effect- quicker rhythm."},
   {n:"Assonance", d:"Repetition of the same vowel sound", e:"Purple Curtain", f:"Sound Effect- Gives the reader the ability to hear the sentence and imagine the image."},
   {n:"Couplet", d:"Two lines of poetry paired together by rhyme", e:"Here and Year examples of rhyming in a poem.", f:"Gives the poem a rhythmic quality."},
@@ -207,66 +162,99 @@ const T = [
   {n:"Simile", d:"Comparing two things, using ‘like’ or ‘as’.", e:"As white as snow.", f:"Creates a vivid image."},
   {n:"Symbolism", d:"Use of one thing to represent another", e:"Light= A symbol of hope, happiness.", f:"Makes the reader think."}
 ];
+const v = s => s.map(([n,d]) => ({n,d}));
+const SEOMRA = v([
+  ["Fuinneog","Window"],["Leabhar","Book"],["Ríomhaire","Computer"],["Radaitheoir","Radiator"],["Deasc","Desk"],
+  ["Cóipleabhar","Copy book"],["Bosca bruscair","Bin"],["Clár bán","Whiteboard"],["Cathaoir","Chair"],["Seomra ranga","Classroom"],
+  ["Doras","Door"],["Bosca lóin","Lunchbox"],["Scuab urláir","Sweeping brush"],["Ríomhaire glúine","Laptop"],["Dialann scoile","School journal"],
+  ["Cófra stórála","Locker"],["Leabhragán","Bookcase"],["Peann luaidhe","Pencil"]
+]);
+const ABHAIR = v([
+  ["Matamaitic","Maths"],["Eolaíocht","Science"],["Staidéar gnó","Business studies"],["Adhmadóireacht","Woodwork"],["Innealtóireacht","Engineering"],
+  ["Léann clasaiceach","Classical studies"],["Creideamh","Religious education"],["Ceol","Music"],["Eacnamaíocht bhaile / Tíos","Home economics"],
+  ["Grafaic","Graphics"],["Stair","History"],["Corpoideachas","Physical education"],["OSSP","CSPE"],["OSPS","SPHE"],
+  ["Bitheolaíocht","Biology"],["Ceimic","Chemistry"],["Fisic","Physics"],["Gaeilge","Irish"],["Béarla","English"],
+  ["Gearmáinis","German"],["Fraincis","French"],["Spáinnis","Spanish"],["Ábhar","Subject"]
+]);
+
+const POETIC_LABELS = {name:"Name", def:"Definition", nameWord:"name", defWord:"definition"};
+const IRISH_LABELS = {name:"Irish", def:"English", nameWord:"Irish", defWord:"English"};
+const DECKS = {
+  "poetic-techniques": {title:"Poetic Techniques", parent:"english", items:POETIC, L:POETIC_LABELS, store:"ptd-progress-v1",
+    sub:"Your term sheet, word for word. Learn it, then test both ways: definition → name and name → definition."},
+  "seomra-ranga": {title:"An Seomra Ranga", parent:"irish", items:SEOMRA, L:IRISH_LABELS, store:"rh-seomra-ranga",
+    sub:"The classroom. Test both ways: English → Irish and Irish → English."},
+  "abhair": {title:"Ábhair", parent:"irish", items:ABHAIR, L:IRISH_LABELS, store:"rh-abhair",
+    sub:"School subjects. Test both ways: English → Irish and Irish → English."}
+};
+const SUBJECTS = {
+  english: {title:"English", decks:["poetic-techniques"]},
+  irish: {title:"Irish", decks:["seomra-ranga","abhair"]}
+};
+
+/* ================= HELPERS ================= */
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+function lev(a,b){ const m=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t;}} return m[b.length]; }
+const opt = (v,t) => `<option value="${v}">${esc(t)}</option>`;
 
-/* ---- progress: streak per term per direction ---- */
-const KEY = "ptd-progress-v1";
-let P = {};
-try { P = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) { P = {}; }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {} };
-const k = (i, dir) => i + ":" + (dir === "n2d" ? "n2d" : "d2n"); // example→name counts toward d2n
+/* ================= PROGRESS (per deck) ================= */
+function loadP(key){ try { return JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return {}; } }
+let D = null, T = [], L = null, P = {};
+const save = () => { try { localStorage.setItem(D.store, JSON.stringify(P)); } catch(e) {} };
+const k = (i, dir) => i + ":" + (dir === "n2d" ? "n2d" : "d2n");
 const streak = (i, dir) => (P[k(i,dir)] || 0);
 function mark(i, dir, ok){ P[k(i,dir)] = ok ? streak(i,dir)+1 : 0; save(); renderProgress(); }
-const known = (i, dir) => streak(i,dir) >= 2;
+const known = (i, dir, p = P) => (p[k(i,dir)] || 0) >= 2;
+const memorised = deck => { const p = loadP(deck.store); return deck.items.filter((_,i) => known(i,"d2n",p) && known(i,"n2d",p)).length; };
 function renderProgress(){
   let full = 0;
   $("dots").innerHTML = T.map((t,i) => {
     const a = known(i,"d2n"), b = known(i,"n2d");
     if (a && b) full++;
     const cls = a && b ? "full" : (a || b ? "half" : "");
-    const tip = `${t.n}: definition→name ${a?"✓":"…"}, name→definition ${b?"✓":"…"}`;
-    return `<span class="dot ${cls}" title="${esc(tip)}">${esc(t.n)}</span>`;
+    return `<span class="dot ${cls}">${esc(t.n)}</span>`;
   }).join("");
   $("progText").textContent = `${full} / ${T.length}`;
   $("progBar").style.width = (full / T.length * 100) + "%";
 }
 
-/* ---- tabs ---- */
+/* ================= TABS ================= */
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
   document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
   document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-" + b.dataset.view);
 }));
 
-/* ---- LEARN ---- */
+/* ================= LEARN ================= */
 function renderLearn(){
-  const c = $("cover").value;
-  const cov = which => (c === "name" && which === "n") || ((c === "def") && which === "d") || (c === "all" && which !== "n");
+  const c = $("cover").value, hasEx = !!T[0].e;
+  const cov = w => (c === "name" && w === "n") || (c === "def" && w === "d") || (c === "all" && w !== "n");
   $("learnList").innerHTML = T.map(t => `
     <article class="entry">
       <div class="name ${cov("n")?"covered":""}">${esc(t.n)}</div>
-      <div class="field ${cov("d")?"covered":""}"><small>Definition</small>${esc(t.d)}</div>
-      <div class="field ${cov("e")?"covered":""}"><small>Example</small>${esc(t.e)}</div>
-      <div class="field ${cov("f")?"covered":""}"><small>Effect</small>${esc(t.f)}</div>
+      <div class="field ${cov("d")?"covered":""}"><small>${L.def}</small>${esc(t.d)}</div>
+      ${hasEx ? `<div class="field ${cov("e")?"covered":""}"><small>Example</small>${esc(t.e)}</div>
+      <div class="field ${cov("f")?"covered":""}"><small>Effect</small>${esc(t.f)}</div>` : ""}
     </article>`).join("");
 }
 $("cover").addEventListener("change", renderLearn);
 $("learnList").addEventListener("click", e => { const el = e.target.closest(".covered"); if (el) el.classList.remove("covered"); });
 
-/* ---- queue: weakest first; misses re-inserted a few places later ---- */
+/* ================= QUEUE ================= */
 function makeQueue(mode){
   const dirs = mode === "mixed" ? ["d2n","n2d"] : [mode];
   const items = [];
   T.forEach((_,i) => dirs.forEach(d => items.push({i, d})));
-  const s = it => streak(it.i, it.d === "type" || it.d === "e2n" ? "d2n" : it.d);
+  const s = it => streak(it.i, it.d === "n2d" ? "n2d" : "d2n");
   return shuffle(items).sort((a,b) => s(a) - s(b));
 }
 const reinsert = (q, it) => q.splice(Math.min(3, q.length), 0, it);
 
-/* ---- RECALL (self-check) ---- */
-let rq = [], rCur = null, rDone = 0;
-function startRecall(){ rq = makeQueue($("recallDir").value); rDone = 0; nextRecall(); }
+/* ================= RECALL ================= */
+let rq = [], rCur = null;
+function startRecall(){ rq = makeQueue($("recallDir").value); nextRecall(); }
 function nextRecall(){
   rCur = rq.shift();
   const card = $("recallCard");
@@ -277,7 +265,7 @@ function nextRecall(){
   }
   card.className = "card";
   const t = T[rCur.i], d = rCur.d;
-  const label = {d2n:"Definition — say the name", n2d:"Name — say the definition", e2n:"Example — say the name"}[d];
+  const label = {d2n:`${L.def} — say the ${L.nameWord}`, n2d:`${L.name} — say the ${L.defWord}`, e2n:`Example — say the ${L.nameWord}`}[d];
   const prompt = d === "n2d" ? `<div class="prompt name">${esc(t.n)}</div>` : `<div class="prompt">${esc(d === "e2n" ? t.e : t.d)}</div>`;
   card.innerHTML = `<div class="meta"><span>${label}</span><span>${rq.length + 1} left</span></div>
     ${prompt}
@@ -286,9 +274,8 @@ function nextRecall(){
 }
 function showRecall(){
   const t = T[rCur.i], d = rCur.d;
-  const ans = d === "n2d"
-    ? `<div class="def">${esc(t.d)}</div><div class="extra">e.g. ${esc(t.e)} · ${esc(t.f)}</div>`
-    : `<div class="big">${esc(t.n)}</div><div class="extra">${d === "e2n" ? esc(t.d) : "e.g. " + esc(t.e)}</div>`;
+  const ex = t.e ? `<div class="extra">${d === "n2d" ? `e.g. ${esc(t.e)} · ${esc(t.f)}` : d === "e2n" ? esc(t.d) : "e.g. " + esc(t.e)}</div>` : "";
+  const ans = d === "n2d" ? `<div class="def">${esc(t.d)}</div>${ex}` : `<div class="big">${esc(t.n)}</div>${ex}`;
   const acts = $("recallCard").querySelector(".actions");
   acts.insertAdjacentHTML("beforebegin", `<div class="answer">${ans}</div>`);
   acts.innerHTML = `<button class="btn bad" id="rMiss">Missed it</button><button class="btn good" id="rGot">Got it</button>`;
@@ -298,10 +285,9 @@ function showRecall(){
 }
 $("recallDir").addEventListener("change", startRecall);
 
-/* ---- QUIZ ---- */
+/* ================= QUIZ ================= */
 let qq = [], qCur = null, score = 0, asked = 0;
 function startQuiz(){ qq = makeQueue($("quizDir").value); score = 0; asked = 0; nextQuiz(); }
-function lev(a,b){ const m=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t;}} return m[b.length]; }
 function nextQuiz(){
   qCur = qq.shift();
   const card = $("quizCard");
@@ -312,10 +298,10 @@ function nextQuiz(){
   }
   card.className = "card";
   const t = T[qCur.i], d = qCur.d;
-  const meta = `<div class="meta"><span>${d === "n2d" ? "Pick the definition" : d === "type" ? "Type the name" : "Pick the name"}</span><span>${qq.length + 1} left</span></div>`;
+  const meta = `<div class="meta"><span>${d === "n2d" ? "Pick the " + L.defWord : d === "type" ? "Type the " + L.nameWord : "Pick the " + L.nameWord}</span><span>${qq.length + 1} left</span></div>`;
   if (d === "type"){
     card.innerHTML = `${meta}<div class="prompt">${esc(t.d)}</div>
-      <form id="typeForm" class="options" autocomplete="off"><input type="text" id="typeIn" placeholder="Technique name" aria-label="Technique name" autocapitalize="off" spellcheck="false"><button class="btn primary">Check</button></form>
+      <form id="typeForm" class="options" autocomplete="off"><input type="text" id="typeIn" placeholder="${L.name}" aria-label="${L.name}" autocapitalize="off" spellcheck="false"><button class="btn primary">Check</button></form>
       <div id="qFb"></div>`;
     $("typeForm").onsubmit = ev => { ev.preventDefault(); checkTyped(); };
     $("typeIn").focus({preventScroll:true});
@@ -342,15 +328,16 @@ function pick(j, btn){
   $("quizCard").querySelectorAll(".opt").forEach(b => { b.disabled = true; if (+b.dataset.j === qCur.i) b.classList.add("right"); });
   if (!ok) btn.classList.add("wrong");
   const t = T[qCur.i];
-  finish(ok, `<div class="extra"><strong>${esc(t.n)}</strong> — e.g. ${esc(t.e)}</div>`);
+  finish(ok, `<div class="extra"><strong>${esc(t.n)}</strong> = ${esc(t.d)}</div>`);
 }
 function checkTyped(){
   const t = T[qCur.i];
-  const v = $("typeIn").value.trim().toLowerCase(), a = t.n.toLowerCase();
-  if (!v) return;
-  const ok = lev(v, a) <= (a.length > 8 ? 3 : 2); // spelling doesn't need to be perfect
+  const val = norm($("typeIn").value);
+  if (!val) return;
+  // accept any "/"-separated answer; accents and small typos don't count against you
+  const ok = t.n.split("/").map(norm).some(a => lev(val, a) <= (a.length > 8 ? 3 : a.length > 4 ? 2 : 1));
   $("typeIn").disabled = true; $("typeForm").querySelector("button").disabled = true;
-  finish(ok, `<div class="big">${esc(t.n)}</div><div class="extra">e.g. ${esc(t.e)}</div>`);
+  finish(ok, `<div class="big">${esc(t.n)}</div>`);
 }
 $("quizDir").addEventListener("change", startQuiz);
 
@@ -360,24 +347,41 @@ $("reset").onclick = () => {
   else { b.dataset.confirm = 1; b.textContent = "Tap again to wipe progress"; setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.textContent = "Reset progress"; } }, 3000); }
 };
 
-/* ---- pages (hash routing) ---- */
-const PAGES = {
-  home: [],
-  english: [["Home","#"]],
-  irish: [["Home","#"]],
-  "poetic-techniques": [["Home","#"],["English","#english"]]
-};
-const NAMES = {english:"English", irish:"Irish", "poetic-techniques":"Poetic Techniques"};
+/* ================= OPEN A DECK ================= */
+function openDeck(id){
+  D = DECKS[id]; T = D.items; L = D.L; P = loadP(D.store);
+  $("deckTitle").textContent = D.title; $("deckSub").textContent = D.sub;
+  const hasEx = !!T[0].e;
+  $("cover").innerHTML = opt("none","Nothing (read it)") + opt("name", L.name === "Name" ? "Names" : L.name) + opt("def", L.name === "Name" ? "Definitions" : L.def) + (hasEx ? opt("all","Everything but names") : "");
+  $("recallDir").innerHTML = opt("mixed","Mixed (both ways)") + opt("d2n",`${L.def} → I say the ${L.nameWord}`) + opt("n2d",`${L.name} → I say the ${L.defWord}`) + (hasEx ? opt("e2n",`Example → I say the ${L.nameWord}`) : "");
+  $("quizDir").innerHTML = opt("mixed","Mixed (both ways)") + opt("d2n",`${L.def} → pick the ${L.nameWord}`) + opt("n2d",`${L.name} → pick the ${L.defWord}`) + opt("type",`${L.def} → type the ${L.nameWord}`);
+  document.querySelectorAll(".tabs button").forEach((x,i) => x.setAttribute("aria-selected", i === 0));
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-learn");
+  renderLearn(); renderProgress(); startRecall(); startQuiz();
+}
+
+/* ================= ROUTING ================= */
+const tile = (href, name, meta) => `<a class="tile" href="${href}"><span class="tile-name">${esc(name)}</span><span class="tile-meta">${esc(meta)}</span></a>`;
+const crumb = parts => parts.map(([n,h]) => h ? `<a href="${h}">${esc(n)}</a><span>/</span>` : `<span>${esc(n)}</span>`).join("");
 function route(){
-  let p = location.hash.slice(1);
-  if (!PAGES[p]) p = "home";
-  document.querySelectorAll(".page").forEach(el => el.hidden = el.id !== "page-" + p);
-  $("crumbs").innerHTML = PAGES[p].map(([n,h]) => `<a href="${h}">${n}</a><span>/</span>`).join("") + (p === "home" ? "" : `<span>${NAMES[p]}</span>`);
-  const full = T.filter((_,i) => known(i,"d2n") && known(i,"n2d")).length;
-  $("ptMeta").textContent = `9 terms · ${full} memorised`;
+  const p = location.hash.slice(1);
+  const deck = DECKS[p], subj = SUBJECTS[p];
+  $("page-menu").hidden = !!deck; $("page-deck").hidden = !deck;
+  if (deck){
+    const s = SUBJECTS[deck.parent];
+    $("crumbs").innerHTML = crumb([["Home","#"],[s.title,"#"+deck.parent],[deck.title]]);
+    openDeck(p);
+  } else if (subj){
+    $("crumbs").innerHTML = crumb([["Home","#"],[subj.title]]);
+    $("menuTitle").textContent = subj.title; $("menuSub").textContent = "What do you want to study?";
+    $("menuTiles").innerHTML = subj.decks.map(id => { const d = DECKS[id]; return tile("#"+id, d.title, `${d.items.length} ${d.L.name === "Name" ? "terms" : "words"} · ${memorised(d)} memorised`); }).join("");
+  } else {
+    $("crumbs").innerHTML = "";
+    $("menuTitle").textContent = "Revision Hub"; $("menuSub").textContent = "Pick a subject.";
+    $("menuTiles").innerHTML = Object.entries(SUBJECTS).map(([id,s]) => tile("#"+id, s.title, `${s.decks.length} topic${s.decks.length === 1 ? "" : "s"}`)).join("");
+  }
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange", route);
-
-renderLearn(); renderProgress(); startRecall(); startQuiz(); route();
+route();
 </script>
