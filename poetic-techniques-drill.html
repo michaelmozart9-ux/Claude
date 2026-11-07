@@ -76,6 +76,17 @@ input[type=text]{width:100%;font-size:17px}
 .feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)}
 .done{text-align:center;justify-content:center;align-items:center}
 .done .big{font-family:var(--display);font-weight:700;font-size:30px}
+.typerow{display:flex;gap:6px;flex-wrap:wrap}
+.typerow .btn{flex:0 0 auto}
+.fada{min-width:44px;font-family:var(--body);font-size:17px}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.match-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mt{text-align:left;font:15px var(--body);padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;min-height:48px;overflow-wrap:anywhere}
+.mt.irish{font-family:var(--display);font-weight:600;font-size:16px}
+.mt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.mt.ok{background:var(--good-soft);border-color:var(--good);color:var(--good);cursor:default;opacity:.7}
+.mt.no{background:var(--bad-soft);border-color:var(--bad)}
+.tabs button{padding:10px 4px}
 .foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 .crumbs{display:flex;gap:6px;font-size:13px;color:var(--muted);min-height:20px}
@@ -115,6 +126,7 @@ section.page{display:flex;flex-direction:column;gap:20px}
       <button role="tab" id="tab-learn" aria-selected="true" data-view="learn">Learn</button>
       <button role="tab" id="tab-recall" aria-selected="false" data-view="recall">Recall</button>
       <button role="tab" id="tab-quiz" aria-selected="false" data-view="quiz">Quiz</button>
+      <button role="tab" id="tab-match" aria-selected="false" data-view="match">Match</button>
     </nav>
 
     <section id="view-learn" class="view">
@@ -140,6 +152,14 @@ section.page{display:flex;flex-direction:column;gap:20px}
         <select id="quizDir"></select>
       </div>
       <div class="card" id="quizCard"></div>
+    </section>
+
+    <section id="view-match" class="view" hidden>
+      <div class="controls" style="margin-bottom:12px;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">Tap a word on the left, then its match on the right.</span>
+        <span id="matchStats" style="font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums"></span>
+      </div>
+      <div class="card" id="matchCard"></div>
     </section>
 
     <div class="foot">
@@ -182,9 +202,9 @@ const IRISH_LABELS = {name:"Irish", def:"English", nameWord:"Irish", defWord:"En
 const DECKS = {
   "poetic-techniques": {title:"Poetic Techniques", parent:"english", items:POETIC, L:POETIC_LABELS, store:"ptd-progress-v1",
     sub:"Your term sheet, word for word. Learn it, then test both ways: definition → name and name → definition."},
-  "seomra-ranga": {title:"An Seomra Ranga", parent:"irish", items:SEOMRA, L:IRISH_LABELS, store:"rh-seomra-ranga",
+  "seomra-ranga": {title:"An Seomra Ranga", tileSub:"The classroom", parent:"irish", items:SEOMRA, L:IRISH_LABELS, store:"rh-seomra-ranga",
     sub:"The classroom. Test both ways: English → Irish and Irish → English."},
-  "abhair": {title:"Ábhair", parent:"irish", items:ABHAIR, L:IRISH_LABELS, store:"rh-abhair",
+  "abhair": {title:"Subjects", tileSub:"Ábhair", parent:"irish", items:ABHAIR, L:IRISH_LABELS, store:"rh-abhair",
     sub:"School subjects. Test both ways: English → Irish and Irish → English."}
 };
 const SUBJECTS = {
@@ -301,9 +321,22 @@ function nextQuiz(){
   const meta = `<div class="meta"><span>${d === "n2d" ? "Pick the " + L.defWord : d === "type" ? "Type the " + L.nameWord : "Pick the " + L.nameWord}</span><span>${qq.length + 1} left</span></div>`;
   if (d === "type"){
     card.innerHTML = `${meta}<div class="prompt">${esc(t.d)}</div>
-      <form id="typeForm" class="options" autocomplete="off"><input type="text" id="typeIn" placeholder="${L.name}" aria-label="${L.name}" autocapitalize="off" spellcheck="false"><button class="btn primary">Check</button></form>
+      <form id="typeForm" class="options" autocomplete="off"><input type="text" id="typeIn" placeholder="${L.name}" aria-label="${L.name}" autocapitalize="off" spellcheck="false">
+        <div class="typerow">${L.name === "Irish" ? ["á","é","í","ó","ú"].map(c => `<button type="button" class="btn fada" data-c="${c}">${c}</button>`).join("") : ""}
+          <button type="button" class="btn" id="hintBtn">Hint</button><button class="btn primary" style="flex:1">Check</button></div></form>
       <div id="qFb"></div>`;
+    qCur.hints = 0;
     $("typeForm").onsubmit = ev => { ev.preventDefault(); checkTyped(); };
+    card.querySelectorAll(".fada").forEach(b => b.onclick = () => {
+      const inp = $("typeIn"), s = inp.selectionStart ?? inp.value.length, e = inp.selectionEnd ?? s;
+      inp.value = inp.value.slice(0,s) + b.dataset.c + inp.value.slice(e); inp.focus(); inp.setSelectionRange(s+1, s+1);
+    });
+    $("hintBtn").onclick = () => {
+      const a = t.n.split("/")[0].trim();
+      qCur.hints = Math.min(qCur.hints + 1, a.length);
+      $("typeIn").value = a.slice(0, qCur.hints); $("typeIn").focus();
+      $("hintBtn").textContent = `Hint (${qCur.hints})`;
+    };
     $("typeIn").focus({preventScroll:true});
     return;
   }
@@ -315,11 +348,13 @@ function nextQuiz(){
     <div id="qFb"></div>`;
   card.querySelectorAll(".opt").forEach(b => b.onclick = () => pick(+b.dataset.j, b));
 }
-function finish(ok, extraHtml){
-  if (!qCur.retry) { asked++; if (ok) score++; }
-  mark(qCur.i, qCur.d === "type" ? "d2n" : qCur.d, ok);
+function finish(ok, extraHtml, note){
+  const hinted = ok && qCur.hints > 0;
+  if (!qCur.retry) { asked++; if (ok && !hinted) score++; }
+  if (!hinted) mark(qCur.i, qCur.d === "type" ? "d2n" : qCur.d, ok); // a hinted answer doesn't count toward memorised
   if (!ok) { qCur.retry = true; reinsert(qq, qCur); }
-  $("qFb").innerHTML = `<div class="answer"><div class="feedback ${ok?"ok":"no"}">${ok ? "Correct" : "Not quite — this one comes back."}</div>${extraHtml}
+  const msg = !ok ? "Not quite — this one comes back." : hinted ? "Correct with a hint — doesn't count toward memorised yet." : note || "Correct";
+  $("qFb").innerHTML = `<div class="answer"><div class="feedback ${ok?"ok":"no"}">${msg}</div>${extraHtml}
     <div class="actions"><button class="btn primary" id="qNext">Next</button></div></div>`;
   $("qNext").onclick = nextQuiz; $("qNext").focus({preventScroll:true});
 }
@@ -336,8 +371,50 @@ function checkTyped(){
   if (!val) return;
   // accept any "/"-separated answer; accents and small typos don't count against you
   const ok = t.n.split("/").map(norm).some(a => lev(val, a) <= (a.length > 8 ? 3 : a.length > 4 ? 2 : 1));
-  $("typeIn").disabled = true; $("typeForm").querySelector("button").disabled = true;
-  finish(ok, `<div class="big">${esc(t.n)}</div>`);
+  const raw = $("typeIn").value.trim().toLowerCase().replace(/\s+/g," ");
+  const exact = t.n.split("/").some(a => a.trim().toLowerCase() === raw);
+  $("typeIn").disabled = true; $("typeForm").querySelectorAll("button").forEach(b => b.disabled = true);
+  finish(ok, `<div class="big">${esc(t.n)}</div>`, exact ? "Correct" : "Correct — check the spelling and fadas below.");
+}
+
+/* ================= MATCH ================= */
+let mPairs = [], mSel = null, mLeft = 0, mMoves = 0, mStart = 0;
+function startMatch(){
+  const n = Math.min(6, T.length);
+  mPairs = shuffle(T.map((_,i)=>i)).slice(0,n); mLeft = n; mMoves = 0; mSel = null; mStart = Date.now();
+  const isP = L.name === "Name";
+  const L1 = shuffle(mPairs), R1 = shuffle(mPairs);
+  $("matchCard").className = "card";
+  $("matchCard").innerHTML = `<div class="match-grid">
+    <div class="match-col">${L1.map(i => `<button class="mt irish" data-i="${i}" data-s="l">${esc(T[i].n)}</button>`).join("")}</div>
+    <div class="match-col">${R1.map(i => `<button class="mt" data-i="${i}" data-s="r">${esc(T[i].d)}</button>`).join("")}</div></div>`;
+  $("matchCard").querySelectorAll(".mt").forEach(b => b.onclick = () => tapMatch(b));
+  $("matchStats").textContent = `${n} pairs`;
+}
+function tapMatch(b){
+  if (b.classList.contains("ok")) return;
+  if (!mSel || mSel.dataset.s === b.dataset.s){
+    if (mSel) mSel.classList.remove("sel");
+    mSel = b; b.classList.add("sel"); return;
+  }
+  mMoves++;
+  const a = mSel; mSel = null; a.classList.remove("sel");
+  if (a.dataset.i === b.dataset.i){
+    [a,b].forEach(x => { x.classList.add("ok"); x.disabled = true; });
+    if (--mLeft === 0){
+      const secs = Math.round((Date.now() - mStart) / 1000), perfect = mMoves === mPairs.length;
+      setTimeout(() => {
+        $("matchCard").className = "card done";
+        $("matchCard").innerHTML = `<div class="big">${perfect ? "Perfect round" : "All matched"}</div>
+          <p class="extra">${mMoves} tries for ${mPairs.length} pairs · ${secs}s</p><button class="btn primary" id="mAgain">Next round</button>`;
+        $("mAgain").onclick = startMatch; $("mAgain").focus({preventScroll:true});
+      }, 350);
+    }
+  } else {
+    [a,b].forEach(x => x.classList.add("no"));
+    setTimeout(() => [a,b].forEach(x => x.classList.remove("no")), 450);
+  }
+  $("matchStats").textContent = `${mPairs.length - mLeft} / ${mPairs.length} matched · ${mMoves} tries`;
 }
 $("quizDir").addEventListener("change", startQuiz);
 
@@ -357,7 +434,7 @@ function openDeck(id){
   $("quizDir").innerHTML = opt("mixed","Mixed (both ways)") + opt("d2n",`${L.def} → pick the ${L.nameWord}`) + opt("n2d",`${L.name} → pick the ${L.defWord}`) + opt("type",`${L.def} → type the ${L.nameWord}`);
   document.querySelectorAll(".tabs button").forEach((x,i) => x.setAttribute("aria-selected", i === 0));
   document.querySelectorAll(".view").forEach(v => v.hidden = v.id !== "view-learn");
-  renderLearn(); renderProgress(); startRecall(); startQuiz();
+  renderLearn(); renderProgress(); startRecall(); startQuiz(); startMatch();
 }
 
 /* ================= ROUTING ================= */
@@ -374,7 +451,7 @@ function route(){
   } else if (subj){
     $("crumbs").innerHTML = crumb([["Home","#"],[subj.title]]);
     $("menuTitle").textContent = subj.title; $("menuSub").textContent = "What do you want to study?";
-    $("menuTiles").innerHTML = subj.decks.map(id => { const d = DECKS[id]; return tile("#"+id, d.title, `${d.items.length} ${d.L.name === "Name" ? "terms" : "words"} · ${memorised(d)} memorised`); }).join("");
+    $("menuTiles").innerHTML = subj.decks.map(id => { const d = DECKS[id]; return tile("#"+id, d.title, `${d.tileSub ? d.tileSub + " · " : ""}${d.items.length} ${d.L.name === "Name" ? "terms" : "words"} · ${memorised(d)} memorised`); }).join("");
   } else {
     $("crumbs").innerHTML = "";
     $("menuTitle").textContent = "Revision Hub"; $("menuSub").textContent = "Pick a subject.";
