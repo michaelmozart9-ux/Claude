@@ -197,6 +197,22 @@ const ABHAIR = v([
   ["Gearmáinis","German"],["Fraincis","French"],["Spáinnis","Spanish"],["Ábhar","Subject"]
 ]);
 
+const RCATS = ["Symbol","Founder","Sacred text","Place of worship","God(s)","Place of pilgrimage"];
+const RGRID = {
+  Buddhism:     ["☸ Dharma wheel","Siddhartha Gautama","Tipitaka","Temple","No god (Buddha is not a god)","Lumbini, Bodh Gaya, Kushinagar"],
+  Islam:        ["☪ Star and crescent","Muhammad","Quran","Mosque","Allah","Mecca"],
+  Christianity: ["✝ Cross","Jesus Christ","The Holy Bible","Church","Yahweh","Jerusalem, Vatican City, Camino de Santiago"],
+  Hinduism:     ["🕉 Om","None","Shruti and Smriti (Vedas)","Mandir (temple)","Brahman and many more","Tirtha: River Ganges"],
+  Judaism:      ["✡ Star of David","Abraham","Torah","Synagogue","Yahweh","Western Wall in Jerusalem"]
+};
+const RELIGIONS = [];
+Object.entries(RGRID).forEach(([r, vals]) => vals.forEach((n, ci) => {
+  const plain = n.replace(/^[^\p{L}]+/u, "");
+  const a = [plain, ...plain.split(/[,():]| and /).map(x => x.trim()).filter(x => x.length > 2)];
+  if (/No god/.test(n)) a.push("none");
+  RELIGIONS.push({n, d:`${RCATS[ci]} of ${r}`, r, c:RCATS[ci], a});
+}));
+const RELIGION_LABELS = {name:"Answer", def:"Question", nameWord:"answer", defWord:"question"};
 const POETIC_LABELS = {name:"Name", def:"Definition", nameWord:"name", defWord:"definition"};
 const IRISH_LABELS = {name:"Irish", def:"English", nameWord:"Irish", defWord:"English"};
 const DECKS = {
@@ -205,11 +221,14 @@ const DECKS = {
   "seomra-ranga": {title:"An Seomra Ranga", tileSub:"The classroom", parent:"irish", items:SEOMRA, L:IRISH_LABELS, store:"rh-seomra-ranga",
     sub:"The classroom. Test both ways: English → Irish and Irish → English."},
   "abhair": {title:"Subjects", tileSub:"Ábhair", parent:"irish", items:ABHAIR, L:IRISH_LABELS, store:"rh-abhair",
-    sub:"School subjects. Test both ways: English → Irish and Irish → English."}
+    sub:"School subjects. Test both ways: English → Irish and Irish → English."},
+  "world-religions": {title:"World Religions", tileSub:"5 religions", parent:"religion", items:RELIGIONS, L:RELIGION_LABELS, store:"rh-world-religions", grid:true,
+    sub:"Symbol, founder, sacred text, place of worship, god(s) and pilgrimage for each religion. Test both ways."}
 };
 const SUBJECTS = {
   english: {title:"English", decks:["poetic-techniques"]},
-  irish: {title:"Irish", decks:["seomra-ranga","abhair"]}
+  irish: {title:"Irish", decks:["seomra-ranga","abhair"]},
+  religion: {title:"Religion", decks:["world-religions"]}
 };
 
 /* ================= HELPERS ================= */
@@ -231,6 +250,14 @@ const known = (i, dir, p = P) => (p[k(i,dir)] || 0) >= 2;
 const memorised = deck => { const p = loadP(deck.store); return deck.items.filter((_,i) => known(i,"d2n",p) && known(i,"n2d",p)).length; };
 function renderProgress(){
   let full = 0;
+  if (D.grid){
+    const byR = {};
+    T.forEach((t,i) => { const g = byR[t.r] ||= {n:0, k:0}; g.n++; if (known(i,"d2n") && known(i,"n2d")) { g.k++; full++; } });
+    $("dots").innerHTML = Object.entries(byR).map(([r,g]) => `<span class="dot ${g.k === g.n ? "full" : g.k ? "half" : ""}">${esc(r)} ${g.k}/${g.n}</span>`).join("");
+    $("progText").textContent = `${full} / ${T.length}`;
+    $("progBar").style.width = (full / T.length * 100) + "%";
+    return;
+  }
   $("dots").innerHTML = T.map((t,i) => {
     const a = known(i,"d2n"), b = known(i,"n2d");
     if (a && b) full++;
@@ -250,6 +277,15 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
 /* ================= LEARN ================= */
 function renderLearn(){
   const c = $("cover").value, hasEx = !!T[0].e;
+  if (D.grid){
+    const rs = [...new Set(T.map(t => t.r))];
+    $("learnList").innerHTML = rs.map(r => `
+      <article class="entry">
+        <div class="name">${esc(r)}</div>
+        ${T.filter(t => t.r === r).map(t => `<div class="field ${c === "name" ? "covered" : ""}"><small>${esc(t.c)}</small>${esc(t.n)}</div>`).join("")}
+      </article>`).join("");
+    return;
+  }
   const cov = w => (c === "name" && w === "n") || (c === "def" && w === "d") || (c === "all" && w !== "n");
   $("learnList").innerHTML = T.map(t => `
     <article class="entry">
@@ -340,7 +376,13 @@ function nextQuiz(){
     $("typeIn").focus({preventScroll:true});
     return;
   }
-  const wrong = shuffle(T.map((_,j)=>j).filter(j => j !== qCur.i)).slice(0,3);
+  // distractors: same category first, never one with the same answer text
+  const seen = new Set([t.n]), wrong = [];
+  for (const j of [...shuffle(T.map((_,j)=>j).filter(j => T[j].c && T[j].c === t.c)), ...shuffle(T.map((_,j)=>j))]){
+    if (wrong.length === 3) break;
+    if (j === qCur.i || seen.has(T[j].n)) continue;
+    seen.add(T[j].n); wrong.push(j);
+  }
   const opts = shuffle([qCur.i, ...wrong]);
   const isN = d === "n2d";
   card.innerHTML = `${meta}${isN ? `<div class="prompt name">${esc(t.n)}</div>` : `<div class="prompt">${esc(t.d)}</div>`}
@@ -370,9 +412,9 @@ function checkTyped(){
   const val = norm($("typeIn").value);
   if (!val) return;
   // accept any "/"-separated answer; accents and small typos don't count against you
-  const ok = t.n.split("/").map(norm).some(a => lev(val, a) <= (a.length > 8 ? 3 : a.length > 4 ? 2 : 1));
+  const ok = (t.a || t.n.split("/")).map(norm).some(a => lev(val, a) <= (a.length > 8 ? 3 : a.length > 4 ? 2 : 1));
   const raw = $("typeIn").value.trim().toLowerCase().replace(/\s+/g," ");
-  const exact = t.n.split("/").some(a => a.trim().toLowerCase() === raw);
+  const exact = (t.a || t.n.split("/")).some(a => a.trim().toLowerCase() === raw);
   $("typeIn").disabled = true; $("typeForm").querySelectorAll("button").forEach(b => b.disabled = true);
   finish(ok, `<div class="big">${esc(t.n)}</div>`, exact ? "Correct" : "Correct — check the spelling and fadas below.");
 }
@@ -381,7 +423,8 @@ function checkTyped(){
 let mPairs = [], mSel = null, mLeft = 0, mMoves = 0, mStart = 0;
 function startMatch(){
   const n = Math.min(6, T.length);
-  mPairs = shuffle(T.map((_,i)=>i)).slice(0,n); mLeft = n; mMoves = 0; mSel = null; mStart = Date.now();
+  const used = new Set();
+  mPairs = shuffle(T.map((_,i)=>i)).filter(i => !used.has(T[i].n) && used.add(T[i].n)).slice(0,n); mLeft = n; mMoves = 0; mSel = null; mStart = Date.now();
   const isP = L.name === "Name";
   const L1 = shuffle(mPairs), R1 = shuffle(mPairs);
   $("matchCard").className = "card";
@@ -429,7 +472,7 @@ function openDeck(id){
   D = DECKS[id]; T = D.items; L = D.L; P = loadP(D.store);
   $("deckTitle").textContent = D.title; $("deckSub").textContent = D.sub;
   const hasEx = !!T[0].e;
-  $("cover").innerHTML = opt("none","Nothing (read it)") + opt("name", L.name === "Name" ? "Names" : L.name) + opt("def", L.name === "Name" ? "Definitions" : L.def) + (hasEx ? opt("all","Everything but names") : "");
+  $("cover").innerHTML = D.grid ? opt("none","Nothing (read it)") + opt("name","Answers") : opt("none","Nothing (read it)") + opt("name", L.name === "Name" ? "Names" : L.name) + opt("def", L.name === "Name" ? "Definitions" : L.def) + (hasEx ? opt("all","Everything but names") : "");
   $("recallDir").innerHTML = opt("mixed","Mixed (both ways)") + opt("d2n",`${L.def} → I say the ${L.nameWord}`) + opt("n2d",`${L.name} → I say the ${L.defWord}`) + (hasEx ? opt("e2n",`Example → I say the ${L.nameWord}`) : "");
   $("quizDir").innerHTML = opt("mixed","Mixed (both ways)") + opt("d2n",`${L.def} → pick the ${L.nameWord}`) + opt("n2d",`${L.name} → pick the ${L.defWord}`) + opt("type",`${L.def} → type the ${L.nameWord}`);
   document.querySelectorAll(".tabs button").forEach((x,i) => x.setAttribute("aria-selected", i === 0));
@@ -451,7 +494,7 @@ function route(){
   } else if (subj){
     $("crumbs").innerHTML = crumb([["Home","#"],[subj.title]]);
     $("menuTitle").textContent = subj.title; $("menuSub").textContent = "What do you want to study?";
-    $("menuTiles").innerHTML = subj.decks.map(id => { const d = DECKS[id]; return tile("#"+id, d.title, `${d.tileSub ? d.tileSub + " · " : ""}${d.items.length} ${d.L.name === "Name" ? "terms" : "words"} · ${memorised(d)} memorised`); }).join("");
+    $("menuTiles").innerHTML = subj.decks.map(id => { const d = DECKS[id]; return tile("#"+id, d.title, `${d.tileSub ? d.tileSub + " · " : ""}${d.items.length} ${d.grid ? "facts" : d.L.name === "Name" ? "terms" : "words"} · ${memorised(d)} memorised`); }).join("");
   } else {
     $("crumbs").innerHTML = "";
     $("menuTitle").textContent = "Revision Hub"; $("menuSub").textContent = "Pick a subject.";
