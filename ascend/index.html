@@ -60,7 +60,23 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 .tab:hover{color:var(--ink)}
 
 /* holdings */
-.hold{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.hold{margin-top:18px;position:relative}
+.hold-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stage-hint{display:none}
+.hold.gl #stage{display:block;width:100%;height:clamp(250px,36vw,430px);clip-path:var(--cut);background:radial-gradient(ellipse at 50% 88%,#1a3852 0%,#0b1424 55%,#060a13 100%);touch-action:pan-y;cursor:grab}
+.hold.gl #stage:active{cursor:grabbing}
+.hold.gl .stage-hint{display:block;position:absolute;top:12px;left:16px;pointer-events:none;color:var(--ion)}
+.hold.gl .hold-cards{margin-top:10px}
+.hold.gl .asset{aspect-ratio:auto;background-image:none!important;border:1px solid var(--line)}
+.hold.gl .asset::before,.hold.gl .asset::after{display:none}
+.view{position:relative;aspect-ratio:16/9;max-width:100%;background:radial-gradient(ellipse at 50% 88%,#1a3852 0%,#0b1424 55%,#060a13 100%)}
+.view canvas,.view img{position:absolute;inset:0;width:100%;height:100%}
+.view canvas{touch-action:pan-y;cursor:grab}
+.view[data-mode=photo] canvas{visibility:hidden}
+.view[data-mode="3d"] img{display:none}
+.view .vt{position:absolute;right:18px;bottom:10px}
+.view .label{position:absolute;left:14px;top:10px;color:var(--ion);pointer-events:none}
+.view[data-mode=photo] .label{display:none}
 .asset{position:relative;aspect-ratio:16/8.2;max-width:100%;clip-path:var(--cut);background:var(--panel) center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end;text-align:left;min-width:0;overflow:hidden}
 .asset::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,10,19,.15) 20%,rgba(6,10,19,.93) 88%)}
 .asset::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);pointer-events:none}
@@ -174,7 +190,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 /* overlays */
 .modal{position:fixed;inset:0;z-index:50;background:rgba(3,6,12,.82);display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}
 .sheet{width:min(560px,100%);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line-hi);clip-path:var(--cut)}
-.sheet img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.sheet img{display:block;object-fit:cover}
 .sheet .sb{padding:18px;display:grid;gap:10px}
 .sheet h3{margin:0;font-family:var(--f-display);font-size:24px}
 .sheet p{margin:0;color:var(--ink-2);font-size:14px}
@@ -193,7 +209,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 
 @media (max-width:900px){.deck{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:620px){
-  .hold{grid-template-columns:1fr}.asset{aspect-ratio:16/7}
+  .hold-cards{grid-template-columns:1fr}.asset{aspect-ratio:16/7}
   .stat{min-width:0;flex:1;padding:5px 9px}.stat .v{font-size:16px}
   .hud .wrap{gap:10px}.sync{display:none}
   .day .num{font-size:17px}.day .cnt{display:none}
@@ -238,7 +254,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
   </nav>
 
   <section id="vMissions">
-    <div class="hold" id="hold"></div>
+    <div class="hold" id="hold"><canvas id="stage" hidden aria-label="3D view of your current home and car. Drag to rotate."></canvas><span class="label stage-hint">Your property · drag to rotate</span><div class="hold-cards" id="holdCards"></div></div>
     <div class="deck">
       <div class="panel">
         <div class="panel-h">
@@ -291,6 +307,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
             <li>XP raises your level and never drops. Credits buy homes and cars.</li>
             <li>Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
             <li>You can plan future days but only clear today or earlier.</li>
+            <li>The 3D models are stylized stand-ins. The showroom photos show the real thing.</li>
           </ul>
         </div>
       </aside>
@@ -310,6 +327,132 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 <div id="modalHost"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <canvas id="fx"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* Ascend3D: procedural homes and cars plus a small orbit viewer. Absent (null) when three.js or WebGL is unavailable; the page then falls back to photos. */
+window.Ascend3D=(()=>{
+"use strict";
+const T=window.THREE;if(!T)return null;
+const mats={};
+const M=(c,o)=>{const k=c+JSON.stringify(o||{});if(mats[k])return mats[k];const m=new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o));m.color.convertSRGBToLinear();m.emissive.convertSRGBToLinear();return mats[k]=m};
+const LIT=()=>M(0x2a2114,{emissive:0xffc98a,emissiveIntensity:1.15,roughness:.3});
+const GLS=()=>M(0x0b1622,{roughness:.08,metalness:.9});
+const GRASS=()=>M(0x2f5d34,{roughness:1}),CONC=()=>M(0x8d949e,{roughness:.9}),STONE=()=>M(0xb9b3a6,{roughness:.9}),WOOD=()=>M(0x6b4a32,{roughness:.75});
+const WATER=()=>M(0x0d6f8f,{emissive:0x19c3e6,emissiveIntensity:.6,roughness:.05,metalness:.3});
+const mesh=(geo,mat)=>{const m=new T.Mesh(geo,mat);m.castShadow=m.receiveShadow=true;return m};
+function B(g,w,h,d,mat,x,y,z){const m=mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x||0,(y||0)+h/2,z||0);g.add(m);return m}
+function gable(g,w,h,d,mat,x,y,z,ry){const s=new T.Shape();s.moveTo(-w/2,0);s.lineTo(w/2,0);s.lineTo(0,h);s.closePath();
+  const geo=new T.ExtrudeGeometry(s,{depth:d,bevelEnabled:false});geo.translate(0,0,-d/2);const m=mesh(geo,mat);m.position.set(x||0,y||0,z||0);m.rotation.y=ry||0;g.add(m);return m}
+function wins(g,n,x0,x1,y,z,w,h,lit){for(let i=0;i<n;i++){const x=n===1?(x0+x1)/2:x0+(x1-x0)*i/(n-1);B(g,w,h,.1,lit(i)?LIT():GLS(),x,y,z)}}
+function tree(g,x,z,s){s=s||1;const t=mesh(new T.CylinderGeometry(.12*s,.2*s,2*s,8),M(0x4a3524));t.position.set(x,s,z);g.add(t);
+  for(const[dx,dy,dz,r]of[[0,2.7,0,1.25],[.7,2.1,.3,.85],[-.6,2.2,-.3,.95]]){const f=mesh(new T.IcosahedronGeometry(r*s,1),M(0x2f6b3c,{roughness:.95,flatShading:true}));f.position.set(x+dx*s,dy*s,z+dz*s);g.add(f)}}
+function lot(g,w,d,mat){B(g,w,.2,d,mat,0,-.2,0).castShadow=false;g.userData.lot=[w,d]}
+const yes=()=>true,no=()=>false;
+
+const HOUSE=[
+ g=>{lot(g,10,9,GRASS());B(g,4,2.4,3.2,M(0xb5332e));gable(g,4.6,1.7,3.7,M(0x6f1d1a),0,2.4,0);B(g,.8,1.7,.1,M(0xf1ece2),0,0,1.6);wins(g,2,-1.3,1.3,1.1,1.6,.7,.8,i=>i===1);B(g,.4,.9,.4,M(0x5a5f66),1.2,3.2,-.6)},
+ g=>{lot(g,12,10,CONC());B(g,7,10,6,M(0xcfd3d8));B(g,7.4,.3,6.4,M(0x8f96a0),0,10,0);
+   for(let f=0;f<4;f++){if(f)wins(g,3,-2.2,2.2,.5+f*2.4,3,1.3,1.4,i=>f===2&&i===1);else{wins(g,2,-2.2,2.2,.6,3,1.3,1.4,no);B(g,1.1,2.1,.12,M(0x30363f),0,0,3)}}
+   for(let f=1;f<4;f++)for(const s of[-1,1])wins(g,2,-1.5,1.5,.5+f*2.4,0,1.2,1.4,no)},
+ g=>{lot(g,14,12,CONC());B(g,9,20,8,M(0x2c3442,{roughness:.5,metalness:.3}));B(g,9.5,.35,8.5,M(0x1b212b),0,20,0);B(g,2.4,2.6,.14,LIT(),0,0,4);
+   for(let f=1;f<7;f++){wins(g,4,-3.2,3.2,.6+f*2.75,4,1.5,1.7,()=>f===4);for(const x of[-3.2,3.2]){B(g,1.9,.12,1,CONC(),x,.45+f*2.75,4.5);B(g,1.9,.7,.05,GLS(),x,.55+f*2.75,5)}}},
+ g=>{lot(g,16,11,CONC());[[-4.2,0x7d8a6a],[0,0xd4c3a5],[4.2,0x8a6f8f]].forEach(([x,c],u)=>{B(g,4.1,8.5,7,M(c),x,0,0);gable(g,4.1,2.1,7.3,M(0x3a3f47),x,8.5,0);
+   for(let f=0;f<3;f++)wins(g,f?2:1,f?x-1:x+1,f?x+1:x+1,.9+f*2.7,3.5,1.1,1.5,()=>u===1);B(g,.95,2.1,.12,M(u===1?0x1f6f8a:0x2a2f36),x-1,0,3.5);B(g,1.6,.3,1,STONE(),x-1,0,4)})},
+ g=>{lot(g,28,19,GRASS());B(g,11,3.2,8,M(0xa9805e),-3,0,-1);gable(g,8.7,2.7,11.7,M(0x3b3f45),-3,3.2,-1,Math.PI/2);
+   B(g,7,3,7,M(0xa9805e),6,0,.5);gable(g,7.5,2,7.3,M(0x3b3f45),6,3,.5);for(const x of[4.3,7.7])B(g,2.8,2.3,.12,M(0xeef0f2),x,0,4);
+   B(g,7,.06,6,CONC(),6,0,7);B(g,1,2.1,.12,M(0x7a2b22),-3,0,3);wins(g,2,-6.5,.5,1,3,1.6,1.4,yes);B(g,.9,2,.9,M(0x7b5b45),-6,4,-2);tree(g,-10.5,5,1.3);tree(g,11.5,-5,1.1)},
+ g=>{lot(g,26,22,M(0x24452c,{roughness:1}));B(g,13,.6,13,WOOD(),0,0,1);gable(g,10,8,10,M(0x1d2630,{roughness:.6}),0,.6,0);gable(g,7.8,6.2,.2,LIT(),0,.75,5);
+   B(g,5.5,3,6,WOOD(),6.5,.6,-1);gable(g,6,1.8,6.4,M(0x1d2630),6.5,3.6,-1);wins(g,2,5.3,7.7,1.5,2.05,1.4,1.5,yes);B(g,1,10,1,M(0x6d6a66),-2.6,0,-2.5);
+   tree(g,-10,-6,1.8);tree(g,-10.5,4,1.4);tree(g,10.5,-7,1.6);tree(g,11,7,1.2)},
+ g=>{lot(g,28,20,GRASS());B(g,13,3.2,7,M(0x23262b,{roughness:.6}),1,0,-1);B(g,13.8,.25,7.8,CONC(),1,3.2,-1);B(g,8.5,2.6,.12,LIT(),2,.3,2.5);
+   B(g,9,3,6.5,WOOD(),-4.5,3.45,1);B(g,9.8,.25,7.3,CONC(),-4.5,6.45,1);B(g,7.4,2.3,.12,LIT(),-4.5,3.8,4.25);for(const x of[-8.4,-.6])B(g,.25,3.4,.25,M(0x23262b),x,0,3.9);
+   B(g,9,.1,3.5,M(0x5d4630),-4.5,0,2.6);tree(g,9.5,5.5,2.3);tree(g,-11.5,-6,1.3)},
+ g=>{lot(g,32,27,STONE());const W=M(0xf3f1ec,{roughness:.55});B(g,15,3.2,9,W,0,0,-5);B(g,16,.3,10.6,W,0,3.2,-4.6);B(g,11,2.6,.12,LIT(),0,.3,-.5);
+   B(g,11,3,8,W,2.5,3.5,-4);B(g,12,.3,9.6,W,2.5,6.5,-3.6);B(g,9,2.3,.12,LIT(),2.5,3.9,0);B(g,3,3,.3,WOOD(),-5.6,3.5,-1.5);
+   B(g,14,.12,5,WATER(),0,0,6.5);B(g,15.4,.1,6.4,M(0xd9d4c8),0,-.02,6.5);B(g,2,.5,.8,W,-9,0,5.5);B(g,2,.5,.8,W,-9,0,7.5);tree(g,12.5,-8,1.6);tree(g,-13,-9,1.4);tree(g,13,8,1.1)},
+ g=>{lot(g,46,34,STONE());const W=M(0xf6f5f1,{roughness:.5}),D=M(0x20242a,{roughness:.5});
+   B(g,17,3.8,11,W,0,0,-6);B(g,14,3.1,.12,LIT(),0,.35,-.45);B(g,18,.35,12.5,D,0,3.8,-5.6);
+   B(g,19,3.3,9,W,4.5,4.15,-4.5);B(g,17,2.6,.12,LIT(),4.5,4.5,.05);B(g,20.2,.35,10.6,D,4.5,7.45,-4.1);for(const x of[13,10])B(g,.3,4.15,.3,D,x,0,-.6);
+   B(g,9,3.4,13,W,-14.5,0,-4);B(g,.12,2.7,10,LIT(),-9.95,.35,-4);B(g,10,.35,14.4,D,-14.5,3.4,-4);
+   B(g,26,.12,5.5,WATER(),2,0,8);B(g,27.6,.1,7.1,M(0xe3ded2),2,-.02,8);B(g,6,.12,6,WATER(),-15,0,9);
+   for(let i=0;i<4;i++)B(g,2,.45,.8,W,-6+i*4.5,0,12.6);tree(g,19.5,-11,1.9);tree(g,-20,-12,1.7);tree(g,20,10,1.4);tree(g,-20.5,3,1.2);tree(g,15,13.5,1.1)}
+];
+
+const TOP_STD=[[0,.4],[.04,.8],[.25,.97],[.75,1],[.96,.85],[1,.45]],TOP_LOW=[[0,.3],[.05,.62],[.3,.93],[.62,1],[.92,1],[1,.6]],TOP_RND=[[0,.3],[.05,.72],[.2,1],[.78,1],[.94,.78],[1,.35]];
+const CARP=[
+ {L:3.9,W:1.5,gc:.2,b:.95,h:1.5,r:.32,fo:.72,ro:.72,top:TOP_RND,cab:[.2,.37,.6,.93],c:0xd9731f,m:.2,ro2:.55},
+ {L:3.5,W:1.55,gc:.18,b:.92,h:1.5,r:.3,fo:.62,ro:.58,top:TOP_RND,cab:[.14,.3,.8,.96],c:0x79b7e0,m:.3,ro2:.4},
+ {L:4.05,W:1.7,gc:.17,b:.92,h:1.46,r:.31,fo:.78,ro:.68,top:TOP_STD,cab:[.24,.4,.82,.97],c:0x1f6f8f,m:.6,ro2:.35},
+ {L:4.7,W:1.85,gc:.15,b:.9,h:1.42,r:.34,fo:.88,ro:.92,top:TOP_STD,cab:[.24,.42,.68,.9],c:0xf2f4f7,m:.3,ro2:.22},
+ {L:4.8,W:1.9,gc:.15,b:.88,h:1.36,r:.35,fo:.88,ro:.98,top:TOP_STD,cab:[.38,.5,.7,.9],c:0x2a2d33,m:.75,ro2:.3},
+ {L:4.55,W:1.85,gc:.11,b:.82,h:1.27,r:.35,fo:.88,ro:.82,top:TOP_LOW,cab:[.3,.45,.62,.96],c:0xe8eaed,m:.4,ro2:.25,wing:.3},
+ {L:4.55,W:1.95,gc:.1,b:.74,h:1.18,r:.36,fo:.98,ro:.88,top:TOP_LOW,cab:[.24,.42,.58,.86],c:0xc9ced6,m:.9,ro2:.18},
+ {L:4.7,W:2,gc:.09,b:.7,h:1.12,r:.36,fo:.98,ro:.88,top:TOP_LOW,cab:[.26,.43,.58,.84],c:0xc8102e,m:.6,ro2:.2,wing:.2},
+ {L:4.55,W:2.03,gc:.1,b:.76,h:1.2,r:.37,fo:.95,ro:.88,top:TOP_LOW,cab:[.26,.44,.62,.93],c:0x8fa3bd,m:.95,ro2:.15}
+];
+function car(t){const P=CARP[t],g=new T.Group(),L=P.L,W=P.W,x0=-L/2,ra=P.r*1.14,fx=x0+P.fo,rx=L/2-P.ro;
+  const paint=M(P.c,{metalness:P.m,roughness:P.ro2}),V=(u,v)=>new T.Vector2(x0+u*L,P.gc+(P.b-P.gc)*v);
+  const s=new T.Shape();s.moveTo(x0+.03,P.gc);const tp=P.top.map(p=>V(p[0],p[1]));s.lineTo(tp[0].x,tp[0].y);s.splineThru(tp.slice(1));s.lineTo(L/2-.03,P.gc);
+  for(const cx of[rx,fx]){s.lineTo(cx+ra,P.gc);s.lineTo(cx+ra,P.r);s.absarc(cx,P.r,ra,0,Math.PI,false);s.lineTo(cx-ra,P.gc)}
+  s.closePath();
+  const bg=new T.ExtrudeGeometry(s,{depth:W-.12,bevelEnabled:true,bevelSize:.06,bevelThickness:.06,bevelSegments:3,curveSegments:20});bg.translate(0,0,-(W-.12)/2);g.add(mesh(bg,paint));
+  const c=P.cab.map(u=>x0+u*L),yb=P.b-.04,h=P.h,cs=new T.Shape();cs.moveTo(c[0],yb);
+  cs.splineThru([new T.Vector2(c[0]+(c[1]-c[0])*.8,yb+(h-yb)*.86),new T.Vector2(c[1]+.12,h),new T.Vector2((c[1]+c[2])/2,h+.03),new T.Vector2(c[2]-.12,h),new T.Vector2(c[3]+(c[2]-c[3])*.8,yb+(h-yb)*.86),new T.Vector2(c[3],yb)]);cs.closePath();
+  const Wc=W*.8,cg=new T.ExtrudeGeometry(cs,{depth:Wc-.16,bevelEnabled:true,bevelSize:.08,bevelThickness:.08,bevelSegments:3,curveSegments:16});cg.translate(0,0,-(Wc-.16)/2);g.add(mesh(cg,GLS()));
+  B(g,c[2]-c[1]+.1,.05,Wc*.9,paint,(c[1]+c[2])/2,h+.05,0);
+  for(const cx of[fx,rx])for(const sd of[-1,1]){const z=sd*(W/2-.13);
+    const tire=mesh(new T.CylinderGeometry(P.r,P.r,.26,32),M(0x0c0d10,{roughness:.9}));tire.rotation.x=Math.PI/2;tire.position.set(cx,P.r,z);g.add(tire);
+    const rim=mesh(new T.CylinderGeometry(P.r*.64,P.r*.64,.28,20),M(0xc8ccd2,{metalness:.95,roughness:.25}));rim.rotation.x=Math.PI/2;rim.position.set(cx,P.r,z);g.add(rim);
+    const hub=mesh(new T.CylinderGeometry(P.r*.2,P.r*.2,.3,12),M(0x15171b,{metalness:.6,roughness:.4}));hub.rotation.x=Math.PI/2;hub.position.set(cx,P.r,z);g.add(hub)}
+  const hy=P.gc+(P.b-P.gc)*.55;
+  for(const sd of[-1,1]){B(g,.1,.12,W*.2,M(0x202020,{emissive:0xeaf6ff,emissiveIntensity:1.4}),x0+.06,hy,sd*W*.3);B(g,.1,.09,W*.24,M(0x200000,{emissive:0xff2a2a,emissiveIntensity:1.2}),L/2-.05,P.gc+(P.b-P.gc)*.72,sd*W*.28)}
+  if(P.wing){B(g,.4,.04,W*.96,M(0x111317,{metalness:.5,roughness:.4}),L/2-.32,P.b+P.wing,0);for(const sd of[-1,1])B(g,.08,P.wing+.02,.05,M(0x111317),L/2-.36,P.b-.02,sd*W*.3)}
+  return g}
+function house(t){const g=new T.Group();HOUSE[t](g);return g}
+function property(h,c){const g=house(h),lw=g.userData.lot[0],ld=g.userData.lot[1],cx=lw*.16,cz=ld/2+2.1;
+  B(g,7.2,.2,3.6,M(0x161c28,{roughness:.7}),cx,-.2,cz).castShadow=false;const k=car(c);k.position.set(cx,0,cz);g.add(k);return g}
+
+function viewer(canvas,opt){opt=opt||{};let R;
+  try{R=new T.WebGLRenderer({canvas,antialias:true,alpha:true})}catch(e){return null}
+  if(!R.getContext())return null;
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1.1;R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;
+  const scene=new T.Scene(),cam=new T.PerspectiveCamera(32,2,.1,600);
+  const es=new T.Scene();es.background=new T.Color(0x04070c);
+  for(const[w,h,d,x,y,z,col]of[[14,.2,14,0,9,0,0xa9aeb8],[.2,5,12,-10,3,0,0x2b8ba3],[.2,5,12,10,3,0,0xa8875a],[12,4,.2,0,2,-10,0x3a4658]]){const m=new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshBasicMaterial({color:col}));m.position.set(x,y,z);es.add(m)}
+  const pm=new T.PMREMGenerator(R);scene.environment=pm.fromScene(es,.04).texture;pm.dispose();
+  scene.add(new T.HemisphereLight(0x9fc4ff,0x0a0f18,.5));
+  const sun=new T.DirectionalLight(0xfff1dc,1.6);sun.castShadow=true;sun.shadow.mapSize.set(opt.big?2048:1024,opt.big?2048:1024);sun.shadow.bias=-.0006;sun.shadow.normalBias=.03;scene.add(sun);scene.add(sun.target);
+  const rimL=new T.DirectionalLight(0x58e1ff,.5);scene.add(rimL);
+  let content=null,stageG=null,theta=.75,phi=1.2,center=new T.Vector3(),size=new T.Vector3(1,1,1),alive=true,visible=true,drag=null,last=0,dirty=true;
+  const still=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function clear(o){if(!o)return;scene.remove(o);o.traverse(n=>{if(n.geometry)n.geometry.dispose()})}
+  function place(){const asp=cam.aspect,tan=Math.tan(cam.fov*Math.PI/360),hr=Math.hypot(size.x,size.z)/2;
+    const dist=Math.max((size.y*.8+hr*.35)/tan,hr/(tan*asp))*1.12;
+    cam.position.set(center.x+dist*Math.sin(phi)*Math.sin(theta),center.y+dist*Math.cos(phi),center.z+dist*Math.sin(phi)*Math.cos(theta));cam.lookAt(center);dirty=true}
+  function set(obj,baseY){clear(content);clear(stageG);content=obj;scene.add(obj);baseY=baseY||0;
+    const box=new T.Box3().setFromObject(obj);box.getSize(size);box.getCenter(center);center.y=box.min.y+size.y*.42;
+    const rad=Math.hypot(size.x,size.z)/2+Math.max(1,size.x*.06);stageG=new T.Group();
+    const p=new T.Mesh(new T.CylinderGeometry(rad,rad*1.03,.5,72),M(0x0e1626,{roughness:.6,metalness:.35}));p.position.set(center.x,baseY-.25,center.z);p.receiveShadow=true;stageG.add(p);
+    for(const[rr,op]of[[rad,1],[rad*.72,.35]]){const ring=new T.Mesh(new T.TorusGeometry(rr,rad*.006+.02,8,120),new T.MeshBasicMaterial({color:0x58e1ff,transparent:true,opacity:op,toneMapped:false}));ring.rotation.x=Math.PI/2;ring.position.set(center.x,baseY+.01,center.z);stageG.add(ring)}
+    scene.add(stageG);
+    sun.position.set(center.x+rad*.7,rad*1.5+size.y,center.z+rad*.9);sun.target.position.copy(center);const sc=sun.shadow.camera;sc.left=sc.bottom=-rad*1.15;sc.right=sc.top=rad*1.15;sc.near=.5;sc.far=rad*5+size.y*2;sc.updateProjectionMatrix();
+    rimL.position.set(center.x-rad,size.y+rad*.4,center.z-rad);place()}
+  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();place()}
+  const ro=new ResizeObserver(resize);ro.observe(canvas);
+  const io=new IntersectionObserver(en=>{visible=en[0].isIntersecting;dirty=true});io.observe(canvas);
+  const down=e=>{drag={x:e.clientX,y:e.clientY};try{canvas.setPointerCapture(e.pointerId)}catch(_){}} ,
+    move=e=>{if(!drag)return;theta-=(e.clientX-drag.x)*.008;if(e.pointerType==="mouse")phi=Math.min(1.5,Math.max(.55,phi-(e.clientY-drag.y)*.006));drag={x:e.clientX,y:e.clientY};place()},
+    up=()=>{drag=null};
+  canvas.addEventListener("pointerdown",down);canvas.addEventListener("pointermove",move);canvas.addEventListener("pointerup",up);canvas.addEventListener("pointercancel",up);
+  function loop(t){if(!alive)return;requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;
+    if(!visible||document.hidden||!content||!canvas.clientWidth)return;
+    if(opt.auto&&!drag&&!still){theta+=dt*.16;place()}
+    if(dirty){dirty=false;R.render(scene,cam)}}
+  requestAnimationFrame(loop);
+  return{set,dispose(){alive=false;ro.disconnect();io.disconnect();clear(content);clear(stageG);if(scene.environment)scene.environment.dispose();R.dispose();try{R.forceContextLoss()}catch(e){}}}}
+return{viewer,house,car,property}})();
+</script>
 
 <script>
 (()=>{
@@ -438,7 +581,7 @@ function renderHud(){const L=levelOf(state.xp);$("hLevel").textContent=L.level;$
   $("hXp").textContent=`${fmtN(L.into)} / ${fmtN(L.need)} XP`;$("hBar").style.width=(L.into/L.need*100).toFixed(1)+"%";
   $("hCr").textContent=fmtN(state.credits);$("sCr").classList.toggle("neg",state.credits<0);
   const s=streakNow();$("hSt").textContent=s;$("hMult").textContent=`+${Math.round((multFor(today())-1)*100)}% XP`}
-function renderHold(){$("hold").innerHTML=["house","car"].map(kind=>{
+function renderHold(){syncStage();$("holdCards").innerHTML=["house","car"].map(kind=>{
   const cur=CAT[kind].find(i=>i.id===state.active[kind])||CAT[kind][0],nx=nextItem(kind);
   const pct=nx?Math.max(0,Math.min(100,state.credits/nx.price*100)):100;
   return `<button type="button" class="asset" data-go="showroom" style="background-image:url(${cur.img})"><div>
@@ -489,8 +632,14 @@ function renderShop(){const lv=levelOf(state.xp).level;
         <div class="cb"><h4>${esc(it.name)}</h4><p>${esc(it.tag)}</p>${o?"":`<span class="price${can&&!lock?"":" cant"}">${ic("coin")} ${fmtN(it.price)}</span>`}</div></button>`}).join("")}}
 
 /* ---------- modals ---------- */
-function closeModal(){$("modalHost").innerHTML=""}
-function openItem(id){const kind=id[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===id);if(!it)return;
+const A3D=window.Ascend3D||null;let stage=null,stageKey="",mv=null;
+const tierOf=id=>+id.slice(1);
+function syncStage(){if(!stage)return;const k=state.active.house+state.active.car;if(k===stageKey)return;stageKey=k;
+  try{stage.set(A3D.property(tierOf(state.active.house),tierOf(state.active.car)),-.2)}catch(e){}}
+function initStage(){if(!A3D)return;const c=$("stage");c.hidden=false;stage=A3D.viewer(c,{auto:true,big:true});
+  if(stage)$("hold").classList.add("gl");else c.hidden=true}
+function closeModal(){if(mv){mv.dispose();mv=null}$("modalHost").innerHTML=""}
+function openItem(id){closeModal();const kind=id[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===id);if(!it)return;
   const o=state.owned[kind].includes(id),cur=state.active[kind]===id,lv=levelOf(state.xp).level,lock=lv<it.lvl,short=it.price-state.credits;
   let act,msg=it.tag;
   if(cur){act=`<button class="go ghost" type="button" data-close>Close</button>`;msg+=` This is your current ${kind==="house"?"base":"ride"}.`}
@@ -498,8 +647,10 @@ function openItem(id){const kind=id[0]==="h"?"house":"car",it=CAT[kind].find(i=>
   else if(lock){act=`<button class="go" type="button" disabled>Locked</button><button class="go ghost" type="button" data-close>Close</button>`;msg+=` Unlocks at level ${it.lvl}. You are level ${lv}.`}
   else if(short>0){act=`<button class="go" type="button" disabled>${fmtN(short)} credits short</button><button class="go ghost" type="button" data-close>Close</button>`}
   else act=`<button class="go gold" type="button" data-buy="${id}">Buy for ${fmtN(it.price)} credits</button><button class="go ghost" type="button" data-close>Not yet</button>`;
-  $("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.name)}"><img src="${it.img}" alt="${esc(it.name)}">
-    <div class="sb"><span class="label">${kind==="house"?"Home":"Car"} · Tier ${it.tier}</span><h3>${esc(it.name)}</h3><p>${esc(msg)}</p>${o?"":`<span class="price">${ic("coin")} ${fmtN(it.price)} credits</span>`}<div class="acts">${act}</div></div></div></div>`}
+  $("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.name)}"><div class="view" id="mView" data-mode="photo"><canvas id="mCanvas" aria-label="3D model of ${esc(it.name)}. Drag to rotate."></canvas><img src="${it.img}" alt="${esc(it.name)}"><span class="label">3D model · drag to rotate</span><button class="chipbtn vt" type="button" id="vtBtn" data-vt hidden>Photo</button></div>
+    <div class="sb"><span class="label">${kind==="house"?"Home":"Car"} · Tier ${it.tier}</span><h3>${esc(it.name)}</h3><p>${esc(msg)}</p>${o?"":`<span class="price">${ic("coin")} ${fmtN(it.price)} credits</span>`}<div class="acts">${act}</div></div></div></div>`;
+  if(A3D){mv=A3D.viewer($("mCanvas"),{auto:true});
+    if(mv){try{mv.set(kind==="house"?A3D.house(it.tier-1):A3D.car(it.tier-1),kind==="house"?-.2:0);$("mView").dataset.mode="3d";$("vtBtn").hidden=false}catch(e){mv.dispose();mv=null}}}}
 function confirmReset(){$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true"><div class="sb"><h3>Reset all progress?</h3><p>This erases your level, credits, missions, homes and cars on every synced device. It can't be undone.</p><div class="acts"><button class="go" type="button" style="background:var(--bad)" data-reset>Erase everything</button><button class="go ghost" type="button" data-close>Keep my progress</button></div></div></div></div>`}
 function levelUp(l){beep("level");const el=document.createElement("div");el.className="levelup";el.innerHTML=`<div><small>LEVEL UP</small><b>${l}</b><span>${rankOf(l)}</span></div>`;
   document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,2400);burst(null,"#58e1ff",90)}
@@ -533,14 +684,16 @@ document.addEventListener("click",e=>{const t=e.target.closest("button,[data-clo
   else if(d.buy){const kind=d.buy[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===d.buy);
     if(it&&state.credits>=it.price&&levelOf(state.xp).level>=it.lvl&&!state.owned[kind].includes(it.id)){state.credits-=it.price;state.owned[kind].push(it.id);state.active[kind]=it.id;persist();closeModal();render();beep("buy");burst(null,"#ffc24a",110);toast(`${it.name} is yours`)}}
   else if(d.use){const kind=d.use[0]==="h"?"house":"car";if(state.owned[kind].includes(d.use)){state.active[kind]=d.use;persist();closeModal();render()}}
+  else if("vt" in d){const v=$("mView"),to=v.dataset.mode==="3d"?"photo":"3d";v.dataset.mode=to;t.textContent=to==="3d"?"Photo":"3D model"}
   else if("reset" in d){state=fresh();persist();closeModal();render();toast("Progress reset")}
-  else if("close" in d){if(e.target===t||t.tagName==="BUTTON")closeModal()}
+  else if("close" in d){if(t.tagName==="BUTTON"||(e.target===t&&downT===t))closeModal()}
   else if(t.id==="wkPrev"||t.id==="wkNext"){ui.week=addD(ui.week,t.id==="wkPrev"?-7:7);ui.sel=addD(ui.week,dow(ui.sel));render()}
   else if(t.id==="wkNow"){ui.sel=today();ui.week=monOf(ui.sel);render()}
   else if(t.id==="sndBtn"){ui.sound=!ui.sound;saveUi();render();if(ui.sound)beep("ok")}
   else if(t.id==="resetBtn")confirmReset();
   else if(t.id==="claimBtn"){const b=state.boss[ui.week];if(b&&!b.claimed&&weekDmg(ui.week)>=BOSS[b.tier].hp){const T=BOSS[b.tier],before=levelOf(state.xp).level;b.claimed=true;state.credits+=T.loot;state.xp+=T.loot/2;persist();render();beep("buy");burst(t,"#ff4f8b",80);toast(`Boss defeated: +${T.loot} credits, +${T.loot/2} XP`);const a=levelOf(state.xp).level;if(a>before)levelUp(a)}}
 });
+let downT=null;document.addEventListener("pointerdown",e=>{downT=e.target},true);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
   if(f.id==="addForm"){const title=$("taskTitle").value.trim();if(!title){$("taskTitle").focus();return}
@@ -551,6 +704,6 @@ document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
 // roll the day over if the page stays open past midnight
 let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;render()}},60000);
 
-prune();render();initSync();
+prune();initStage();render();initSync();
 })();
 </script>
