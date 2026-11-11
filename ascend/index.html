@@ -88,6 +88,27 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 .asset:hover h2{color:var(--ion)}
 
 /* deck */
+.mkt{margin-top:18px}
+.mkt-top{display:flex;gap:14px 28px;align-items:flex-end;flex-wrap:wrap}
+.mkt-q{display:grid;gap:2px;min-width:0}
+.mkt-q .label b{color:var(--ion)}
+.mkt-p{font-family:var(--f-display);font-weight:700;font-size:clamp(34px,6vw,52px);line-height:1;font-variant-numeric:tabular-nums}
+.mkt-d{font-size:13px;color:var(--ink-2);display:flex;gap:8px;align-items:center}
+.mkt-d b{font-weight:500} .up{color:var(--ok)} .dn{color:var(--bad)}
+.mkt-kv{display:grid;gap:3px;min-width:0}.mkt-kv b{font-weight:500;font-size:14px;overflow-wrap:anywhere}
+.mkt-act{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rng{display:flex;gap:4px}.rng .chipbtn[aria-pressed=true]{border-color:var(--ion);color:var(--ion)}
+.go.warn{background:transparent;border:1px solid var(--bad);color:var(--bad)}.go.warn:hover{background:rgba(255,93,108,.12);filter:none}
+.chart{position:relative;margin-top:12px;height:210px;touch-action:pan-y}
+.chart svg{display:block;width:100%;height:100%;overflow:visible}
+.chart text{font-family:var(--f-mono);font-size:11px;fill:var(--ink-3)}
+.tip{position:absolute;top:0;pointer-events:none;background:var(--panel-2);border:1px solid var(--line-hi);padding:7px 10px;font-size:12px;display:grid;gap:2px;max-width:230px;z-index:2}
+.tip b{font-family:var(--f-mono);font-weight:500;font-size:13px}.tip span{color:var(--ink-2)}
+.feed{list-style:none;margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--line);display:grid;gap:7px}
+.feed li{display:flex;gap:10px;align-items:baseline;font-size:13px;min-width:0}
+.feed .fl{flex:1;min-width:0;overflow-wrap:anywhere;color:var(--ink-2)}.feed .ft{color:var(--ink-3);font-size:11px;white-space:nowrap}
+.feed b{font-family:var(--f-mono);font-weight:500;white-space:nowrap;min-width:70px}
+.field{display:grid;gap:6px}.field input{background:var(--void);border:1px solid var(--line-hi);padding:10px 12px;clip-path:var(--cut-sm);width:100%}
 .deck{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;margin-top:18px;align-items:start}
 .panel{background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);padding:16px;min-width:0}
 .panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
@@ -255,6 +276,19 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 
   <section id="vMissions">
     <div class="hold" id="hold"><canvas id="stage" hidden aria-label="3D view of your current home and car. Drag to rotate."></canvas><span class="label stage-hint">Your property · drag to rotate</span><div class="hold-cards" id="holdCards"></div></div>
+    <div class="panel mkt">
+      <div class="mkt-top">
+        <div class="mkt-q"><span class="label">Your stock · <b>YOU</b></span><div class="mkt-p" id="mkP">100.00</div><div class="mkt-d mono" id="mkD"></div></div>
+        <div class="mkt-kv"><span class="label">All-time high</span><b class="mono" id="mkA">100.00</b></div>
+        <div class="mkt-kv"><span class="label">Last move</span><b id="mkL">Listed</b></div>
+        <div class="mkt-act">
+          <div class="rng" id="mkR"><button class="chipbtn" type="button" data-rng="1W">1W</button><button class="chipbtn" type="button" data-rng="1M">1M</button><button class="chipbtn" type="button" data-rng="ALL">All</button></div>
+          <button class="go warn" type="button" id="admitBtn">Admit a slip</button>
+        </div>
+      </div>
+      <div class="chart" id="chart" role="img" aria-label="Your stock price over time"></div>
+      <ul class="feed" id="feed"></ul>
+    </div>
     <div class="deck">
       <div class="panel">
         <div class="panel-h">
@@ -304,7 +338,8 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
           <div class="panel-h"><h3>Rules</h3></div>
           <ul class="rules">
             <li>Clearing a mission pays XP and the same number of credits.</li>
-            <li>XP raises your level and never drops. Credits buy homes and cars.</li>
+            <li>XP raises your level. It only drops when you admit a slip. Credits buy homes and cars.</li>
+            <li>Your stock rises 1% per 25 XP, jumps on milestones (perfect day, streaks, level up, boss, purchases) and falls up to 6% for a day with missed missions.</li>
             <li>Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
             <li>You can plan future days but only clear today or earlier.</li>
             <li>The 3D models are stylized stand-ins. The showroom photos show the real thing.</li>
@@ -335,43 +370,56 @@ window.Ascend3D=(()=>{
 "use strict";
 const T=window.THREE;if(!T)return null;
 const mats={};
-const M=(c,o)=>{const k=c+JSON.stringify(o||{});if(mats[k])return mats[k];const m=new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o));m.color.convertSRGBToLinear();m.emissive.convertSRGBToLinear();return mats[k]=m};
+const texs={};
+function TX(name){if(texs[name])return texs[name];const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d"),rnd=(a,b)=>a+Math.random()*(b-a),gr=v=>{v=Math.round(v);return`rgb(${v},${v},${v})`};
+  x.fillStyle="#fff";x.fillRect(0,0,256,256);
+  if(name==="brick"){x.fillStyle=gr(150);x.fillRect(0,0,256,256);for(let r=0;r<8;r++)for(let b=-1;b<4;b++){x.fillStyle=gr(rnd(195,255));x.fillRect(b*64+(r%2?32:0)+2,r*32+2,60,28)}}
+  else if(name==="siding"){for(let r=0;r<8;r++){const g=x.createLinearGradient(0,r*32,0,r*32+32);g.addColorStop(0,gr(255));g.addColorStop(.85,gr(222));g.addColorStop(1,gr(140));x.fillStyle=g;x.fillRect(0,r*32,256,32)}}
+  else if(name==="plank"){for(let b=0;b<8;b++){x.fillStyle=gr(rnd(200,255));x.fillRect(b*32,0,32,256);x.fillStyle=gr(120);x.fillRect(b*32,0,2,256);for(let i=0;i<10;i++){x.fillStyle=`rgba(0,0,0,${rnd(.03,.1)})`;x.fillRect(b*32+rnd(3,30),rnd(0,256),1,rnd(20,90))}}}
+  else if(name==="shingle"){for(let r=0;r<8;r++)for(let b=-1;b<8;b++){x.fillStyle=gr(rnd(170,255));x.fillRect(b*32+(r%2?16:0)+1,r*32+2,30,30)}for(let r=0;r<8;r++){x.fillStyle="rgba(0,0,0,.45)";x.fillRect(0,r*32,256,3)}}
+  else if(name==="grass"){x.fillStyle=gr(215);x.fillRect(0,0,256,256);for(let i=0;i<2600;i++){x.fillStyle=gr(rnd(150,255));x.fillRect(rnd(0,256),rnd(0,256),rnd(1,3),rnd(2,6))}}
+  else if(name==="paver"){for(let i=0;i<900;i++){x.fillStyle=gr(rnd(232,255));x.fillRect(rnd(0,256),rnd(0,256),3,3)}x.fillStyle=gr(175);for(let i=0;i<2;i++){x.fillRect(i*128,0,2,256);x.fillRect(0,i*128,256,2)}}
+  else{for(let i=0;i<2200;i++){x.fillStyle=gr(rnd(225,255));x.fillRect(rnd(0,256),rnd(0,256),2,2)}}
+  const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(.5,.5);t.encoding=T.sRGBEncoding;t.anisotropy=4;return texs[name]=t}
+const M=(c,o)=>{o=o||{};const k=c+JSON.stringify(o);if(mats[k])return mats[k];const q=Object.assign({color:c,roughness:.8,metalness:0},o),tx=q.tx,ph=q.phys;delete q.tx;delete q.phys;if(tx)q.map=TX(tx);
+  const m=ph?new T.MeshPhysicalMaterial(Object.assign(q,{clearcoat:1,clearcoatRoughness:.12})):new T.MeshStandardMaterial(q);m.color.convertSRGBToLinear();m.emissive.convertSRGBToLinear();return mats[k]=m};
 const LIT=()=>M(0x2a2114,{emissive:0xffc98a,emissiveIntensity:1.15,roughness:.3});
 const GLS=()=>M(0x0b1622,{roughness:.08,metalness:.9});
-const GRASS=()=>M(0x2f5d34,{roughness:1}),CONC=()=>M(0x8d949e,{roughness:.9}),STONE=()=>M(0xb9b3a6,{roughness:.9}),WOOD=()=>M(0x6b4a32,{roughness:.75});
+const GRASS=()=>M(0x3a7340,{roughness:1,tx:"grass"}),CONC=()=>M(0x9aa1ab,{roughness:.9,tx:"stucco"}),STONE=()=>M(0xc4beb1,{roughness:.9,tx:"paver"}),WOOD=()=>M(0x7a5539,{roughness:.75,tx:"plank"});
 const WATER=()=>M(0x0d6f8f,{emissive:0x19c3e6,emissiveIntensity:.6,roughness:.05,metalness:.3});
 const mesh=(geo,mat)=>{const m=new T.Mesh(geo,mat);m.castShadow=m.receiveShadow=true;return m};
-function B(g,w,h,d,mat,x,y,z){const m=mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x||0,(y||0)+h/2,z||0);g.add(m);return m}
+function B(g,w,h,d,mat,x,y,z){const geo=new T.BoxGeometry(w,h,d),uv=geo.attributes.uv,dm=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];
+  for(let f=0;f<6;f++)for(let i=0;i<4;i++)uv.setXY(f*4+i,uv.getX(f*4+i)*dm[f][0],uv.getY(f*4+i)*dm[f][1]);
+  const m=mesh(geo,mat);m.position.set(x||0,(y||0)+h/2,z||0);g.add(m);return m}
 function gable(g,w,h,d,mat,x,y,z,ry){const s=new T.Shape();s.moveTo(-w/2,0);s.lineTo(w/2,0);s.lineTo(0,h);s.closePath();
   const geo=new T.ExtrudeGeometry(s,{depth:d,bevelEnabled:false});geo.translate(0,0,-d/2);const m=mesh(geo,mat);m.position.set(x||0,y||0,z||0);m.rotation.y=ry||0;g.add(m);return m}
-function wins(g,n,x0,x1,y,z,w,h,lit){for(let i=0;i<n;i++){const x=n===1?(x0+x1)/2:x0+(x1-x0)*i/(n-1);B(g,w,h,.1,lit(i)?LIT():GLS(),x,y,z)}}
+function wins(g,n,x0,x1,y,z,w,h,lit){for(let i=0;i<n;i++){const x=n===1?(x0+x1)/2:x0+(x1-x0)*i/(n-1);B(g,w+.2,h+.2,.05,M(0xe4e1d8,{roughness:.6}),x,y-.1,z);B(g,w,h,.1,lit(i)?LIT():GLS(),x,y,z);B(g,.05,h,.12,M(0xe4e1d8,{roughness:.6}),x,y,z)}}
 function tree(g,x,z,s){s=s||1;const t=mesh(new T.CylinderGeometry(.12*s,.2*s,2*s,8),M(0x4a3524));t.position.set(x,s,z);g.add(t);
   for(const[dx,dy,dz,r]of[[0,2.7,0,1.25],[.7,2.1,.3,.85],[-.6,2.2,-.3,.95]]){const f=mesh(new T.IcosahedronGeometry(r*s,1),M(0x2f6b3c,{roughness:.95,flatShading:true}));f.position.set(x+dx*s,dy*s,z+dz*s);g.add(f)}}
 function lot(g,w,d,mat){B(g,w,.2,d,mat,0,-.2,0).castShadow=false;g.userData.lot=[w,d]}
 const yes=()=>true,no=()=>false;
 
 const HOUSE=[
- g=>{lot(g,10,9,GRASS());B(g,4,2.4,3.2,M(0xb5332e));gable(g,4.6,1.7,3.7,M(0x6f1d1a),0,2.4,0);B(g,.8,1.7,.1,M(0xf1ece2),0,0,1.6);wins(g,2,-1.3,1.3,1.1,1.6,.7,.8,i=>i===1);B(g,.4,.9,.4,M(0x5a5f66),1.2,3.2,-.6)},
- g=>{lot(g,12,10,CONC());B(g,7,10,6,M(0xcfd3d8));B(g,7.4,.3,6.4,M(0x8f96a0),0,10,0);
-   for(let f=0;f<4;f++){if(f)wins(g,3,-2.2,2.2,.5+f*2.4,3,1.3,1.4,i=>f===2&&i===1);else{wins(g,2,-2.2,2.2,.6,3,1.3,1.4,no);B(g,1.1,2.1,.12,M(0x30363f),0,0,3)}}
-   for(let f=1;f<4;f++)for(const s of[-1,1])wins(g,2,-1.5,1.5,.5+f*2.4,0,1.2,1.4,no)},
+ g=>{lot(g,10,9,GRASS());B(g,4,2.4,3.2,M(0xb5332e,{tx:"siding"}));gable(g,4.6,1.7,3.7,M(0x7a211d,{tx:"shingle"}),0,2.4,0);B(g,.8,1.7,.1,M(0xf1ece2),0,0,1.6);wins(g,2,-1.3,1.3,1.1,1.6,.7,.8,i=>i===1);B(g,.4,.9,.4,M(0x5a5f66),1.2,3.2,-.6)},
+ g=>{lot(g,12,10,CONC());B(g,7,10,6,M(0xcfd3d8,{tx:"stucco"}));B(g,7.4,.3,6.4,M(0x8f96a0),0,10,0);
+   for(let f=0;f<4;f++){if(f)wins(g,3,-2.2,2.2,.5+f*2.4,3,1.3,1.4,i=>f===2&&i===1);else{wins(g,2,-2.2,2.2,.6,3,1.3,1.4,no);B(g,1.1,2.1,.12,M(0x30363f),0,0,3)}}},
  g=>{lot(g,14,12,CONC());B(g,9,20,8,M(0x2c3442,{roughness:.5,metalness:.3}));B(g,9.5,.35,8.5,M(0x1b212b),0,20,0);B(g,2.4,2.6,.14,LIT(),0,0,4);
    for(let f=1;f<7;f++){wins(g,4,-3.2,3.2,.6+f*2.75,4,1.5,1.7,()=>f===4);for(const x of[-3.2,3.2]){B(g,1.9,.12,1,CONC(),x,.45+f*2.75,4.5);B(g,1.9,.7,.05,GLS(),x,.55+f*2.75,5)}}},
- g=>{lot(g,16,11,CONC());[[-4.2,0x7d8a6a],[0,0xd4c3a5],[4.2,0x8a6f8f]].forEach(([x,c],u)=>{B(g,4.1,8.5,7,M(c),x,0,0);gable(g,4.1,2.1,7.3,M(0x3a3f47),x,8.5,0);
+ g=>{lot(g,16,11,CONC());[[-4.2,0x7d8a6a],[0,0xd4c3a5],[4.2,0x8a6f8f]].forEach(([x,c],u)=>{B(g,4.1,8.5,7,M(c,{tx:u===1?"siding":"brick"}),x,0,0);gable(g,4.1,2.1,7.3,M(0x4a5059,{tx:"shingle"}),x,8.5,0);
    for(let f=0;f<3;f++)wins(g,f?2:1,f?x-1:x+1,f?x+1:x+1,.9+f*2.7,3.5,1.1,1.5,()=>u===1);B(g,.95,2.1,.12,M(u===1?0x1f6f8a:0x2a2f36),x-1,0,3.5);B(g,1.6,.3,1,STONE(),x-1,0,4)})},
- g=>{lot(g,28,19,GRASS());B(g,11,3.2,8,M(0xa9805e),-3,0,-1);gable(g,8.7,2.7,11.7,M(0x3b3f45),-3,3.2,-1,Math.PI/2);
-   B(g,7,3,7,M(0xa9805e),6,0,.5);gable(g,7.5,2,7.3,M(0x3b3f45),6,3,.5);for(const x of[4.3,7.7])B(g,2.8,2.3,.12,M(0xeef0f2),x,0,4);
+ g=>{lot(g,28,19,GRASS());B(g,11,3.2,8,M(0xb98a64,{tx:"brick"}),-3,0,-1);gable(g,8.7,2.7,11.7,M(0x4b5058,{tx:"shingle"}),-3,3.2,-1,Math.PI/2);
+   B(g,7,3,7,M(0xb98a64,{tx:"brick"}),6,0,.5);gable(g,7.5,2,7.3,M(0x4b5058,{tx:"shingle"}),6,3,.5);for(const x of[4.3,7.7])B(g,2.8,2.3,.12,M(0xeef0f2),x,0,4);
    B(g,7,.06,6,CONC(),6,0,7);B(g,1,2.1,.12,M(0x7a2b22),-3,0,3);wins(g,2,-6.5,.5,1,3,1.6,1.4,yes);B(g,.9,2,.9,M(0x7b5b45),-6,4,-2);tree(g,-10.5,5,1.3);tree(g,11.5,-5,1.1)},
- g=>{lot(g,26,22,M(0x24452c,{roughness:1}));B(g,13,.6,13,WOOD(),0,0,1);gable(g,10,8,10,M(0x1d2630,{roughness:.6}),0,.6,0);gable(g,7.8,6.2,.2,LIT(),0,.75,5);
-   B(g,5.5,3,6,WOOD(),6.5,.6,-1);gable(g,6,1.8,6.4,M(0x1d2630),6.5,3.6,-1);wins(g,2,5.3,7.7,1.5,2.05,1.4,1.5,yes);B(g,1,10,1,M(0x6d6a66),-2.6,0,-2.5);
+ g=>{lot(g,26,22,M(0x2d5937,{roughness:1,tx:"grass"}));B(g,13,.6,13,WOOD(),0,0,1);gable(g,10,8,10,M(0x2a3644,{roughness:.6,tx:"shingle"}),0,.6,0);gable(g,7.8,6.2,.2,LIT(),0,.75,5);
+   B(g,5.5,3,6,WOOD(),6.5,.6,-1);gable(g,6,1.8,6.4,M(0x2a3644,{tx:"shingle"}),6.5,3.6,-1);wins(g,2,5.3,7.7,1.5,2.05,1.4,1.5,yes);B(g,1,10,1,M(0x6d6a66),-2.6,0,-2.5);
    tree(g,-10,-6,1.8);tree(g,-10.5,4,1.4);tree(g,10.5,-7,1.6);tree(g,11,7,1.2)},
  g=>{lot(g,28,20,GRASS());B(g,13,3.2,7,M(0x23262b,{roughness:.6}),1,0,-1);B(g,13.8,.25,7.8,CONC(),1,3.2,-1);B(g,8.5,2.6,.12,LIT(),2,.3,2.5);
    B(g,9,3,6.5,WOOD(),-4.5,3.45,1);B(g,9.8,.25,7.3,CONC(),-4.5,6.45,1);B(g,7.4,2.3,.12,LIT(),-4.5,3.8,4.25);for(const x of[-8.4,-.6])B(g,.25,3.4,.25,M(0x23262b),x,0,3.9);
    B(g,9,.1,3.5,M(0x5d4630),-4.5,0,2.6);tree(g,9.5,5.5,2.3);tree(g,-11.5,-6,1.3)},
- g=>{lot(g,32,27,STONE());const W=M(0xf3f1ec,{roughness:.55});B(g,15,3.2,9,W,0,0,-5);B(g,16,.3,10.6,W,0,3.2,-4.6);B(g,11,2.6,.12,LIT(),0,.3,-.5);
+ g=>{lot(g,32,27,STONE());const W=M(0xf3f1ec,{roughness:.55,tx:"stucco"});B(g,15,3.2,9,W,0,0,-5);B(g,16,.3,10.6,W,0,3.2,-4.6);B(g,11,2.6,.12,LIT(),0,.3,-.5);
    B(g,11,3,8,W,2.5,3.5,-4);B(g,12,.3,9.6,W,2.5,6.5,-3.6);B(g,9,2.3,.12,LIT(),2.5,3.9,0);B(g,3,3,.3,WOOD(),-5.6,3.5,-1.5);
    B(g,14,.12,5,WATER(),0,0,6.5);B(g,15.4,.1,6.4,M(0xd9d4c8),0,-.02,6.5);B(g,2,.5,.8,W,-9,0,5.5);B(g,2,.5,.8,W,-9,0,7.5);tree(g,12.5,-8,1.6);tree(g,-13,-9,1.4);tree(g,13,8,1.1)},
- g=>{lot(g,46,34,STONE());const W=M(0xf6f5f1,{roughness:.5}),D=M(0x20242a,{roughness:.5});
+ g=>{lot(g,46,34,STONE());const W=M(0xf6f5f1,{roughness:.5,tx:"stucco"}),D=M(0x20242a,{roughness:.5});
    B(g,17,3.8,11,W,0,0,-6);B(g,14,3.1,.12,LIT(),0,.35,-.45);B(g,18,.35,12.5,D,0,3.8,-5.6);
    B(g,19,3.3,9,W,4.5,4.15,-4.5);B(g,17,2.6,.12,LIT(),4.5,4.5,.05);B(g,20.2,.35,10.6,D,4.5,7.45,-4.1);for(const x of[13,10])B(g,.3,4.15,.3,D,x,0,-.6);
    B(g,9,3.4,13,W,-14.5,0,-4);B(g,.12,2.7,10,LIT(),-9.95,.35,-4);B(g,10,.35,14.4,D,-14.5,3.4,-4);
@@ -392,21 +440,29 @@ const CARP=[
  {L:4.55,W:2.03,gc:.1,b:.76,h:1.2,r:.37,fo:.95,ro:.88,top:TOP_LOW,cab:[.26,.44,.62,.93],c:0x8fa3bd,m:.95,ro2:.15}
 ];
 function car(t){const P=CARP[t],g=new T.Group(),L=P.L,W=P.W,x0=-L/2,ra=P.r*1.14,fx=x0+P.fo,rx=L/2-P.ro;
-  const paint=M(P.c,{metalness:P.m,roughness:P.ro2}),V=(u,v)=>new T.Vector2(x0+u*L,P.gc+(P.b-P.gc)*v);
+  const paint=M(P.c,{metalness:P.m,roughness:P.ro2,phys:true}),dark=M(0x0c0d10,{roughness:.6,metalness:.3}),V=(u,v)=>new T.Vector2(x0+u*L,P.gc+(P.b-P.gc)*v);
   const s=new T.Shape();s.moveTo(x0+.03,P.gc);const tp=P.top.map(p=>V(p[0],p[1]));s.lineTo(tp[0].x,tp[0].y);s.splineThru(tp.slice(1));s.lineTo(L/2-.03,P.gc);
   for(const cx of[rx,fx]){s.lineTo(cx+ra,P.gc);s.lineTo(cx+ra,P.r);s.absarc(cx,P.r,ra,0,Math.PI,false);s.lineTo(cx-ra,P.gc)}
   s.closePath();
-  const bg=new T.ExtrudeGeometry(s,{depth:W-.12,bevelEnabled:true,bevelSize:.06,bevelThickness:.06,bevelSegments:3,curveSegments:20});bg.translate(0,0,-(W-.12)/2);g.add(mesh(bg,paint));
-  const c=P.cab.map(u=>x0+u*L),yb=P.b-.04,h=P.h,cs=new T.Shape();cs.moveTo(c[0],yb);
-  cs.splineThru([new T.Vector2(c[0]+(c[1]-c[0])*.8,yb+(h-yb)*.86),new T.Vector2(c[1]+.12,h),new T.Vector2((c[1]+c[2])/2,h+.03),new T.Vector2(c[2]-.12,h),new T.Vector2(c[3]+(c[2]-c[3])*.8,yb+(h-yb)*.86),new T.Vector2(c[3],yb)]);cs.closePath();
-  const Wc=W*.8,cg=new T.ExtrudeGeometry(cs,{depth:Wc-.16,bevelEnabled:true,bevelSize:.08,bevelThickness:.08,bevelSegments:3,curveSegments:16});cg.translate(0,0,-(Wc-.16)/2);g.add(mesh(cg,GLS()));
-  B(g,c[2]-c[1]+.1,.05,Wc*.9,paint,(c[1]+c[2])/2,h+.05,0);
+  const bg=new T.ExtrudeGeometry(s,{depth:W-.12,bevelEnabled:true,bevelSize:.06,bevelThickness:.06,bevelSegments:4,curveSegments:24});bg.translate(0,0,-(W-.12)/2);g.add(mesh(bg,paint));
+  const c=P.cab.map(u=>x0+u*L),yb=P.b-.04,h=P.h,Wc=W*.8;
+  const cp=[[c[0],yb],[c[0]+(c[1]-c[0])*.8,yb+(h-yb)*.86],[c[1]+.12,h],[(c[1]+c[2])/2,h+.03],[c[2]-.12,h],[c[3]+(c[2]-c[3])*.8,yb+(h-yb)*.86],[c[3],yb]];
+  const mk=f=>{const sh=new T.Shape(),q=cp.map(f);sh.moveTo(q[0][0],q[0][1]);sh.splineThru(q.slice(1).map(v=>new T.Vector2(v[0],v[1])));sh.closePath();return sh};
+  const cg=new T.ExtrudeGeometry(mk(v=>v),{depth:Wc-.16,bevelEnabled:true,bevelSize:.08,bevelThickness:.08,bevelSegments:4,curveSegments:20});cg.translate(0,0,-(Wc-.16)/2);g.add(mesh(cg,paint));
+  const cxm=(c[0]+c[3])/2,cym=(yb+h)/2+.03,sg=new T.ExtrudeGeometry(mk(v=>[cxm+(v[0]-cxm)*.84,cym+(v[1]-cym)*.62]),{depth:Wc+.03,bevelEnabled:false,curveSegments:20});sg.translate(0,0,-(Wc+.03)/2);g.add(mesh(sg,GLS()));
+  B(g,.08,(h-yb)*.66,Wc+.05,paint,(c[1]+c[2])/2+.06,yb+(h-yb)*.2,0);
+  for(const[ax,ay,bx,by]of[[c[0],yb,cp[1][0],cp[1][1]],[cp[5][0],cp[5][1],c[3],yb]]){const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy),m=mesh(new T.BoxGeometry(len*.78,.03,Wc*.8),GLS());
+    m.position.set((ax+bx)/2-dy/len*.085,(ay+by)/2+dx/len*.085,0);m.rotation.z=Math.atan2(dy,dx);g.add(m)}
+  const spoke=M(0xd2d6dc,{metalness:.95,roughness:.22});
   for(const cx of[fx,rx])for(const sd of[-1,1]){const z=sd*(W/2-.13);
-    const tire=mesh(new T.CylinderGeometry(P.r,P.r,.26,32),M(0x0c0d10,{roughness:.9}));tire.rotation.x=Math.PI/2;tire.position.set(cx,P.r,z);g.add(tire);
-    const rim=mesh(new T.CylinderGeometry(P.r*.64,P.r*.64,.28,20),M(0xc8ccd2,{metalness:.95,roughness:.25}));rim.rotation.x=Math.PI/2;rim.position.set(cx,P.r,z);g.add(rim);
-    const hub=mesh(new T.CylinderGeometry(P.r*.2,P.r*.2,.3,12),M(0x15171b,{metalness:.6,roughness:.4}));hub.rotation.x=Math.PI/2;hub.position.set(cx,P.r,z);g.add(hub)}
+    const tire=mesh(new T.CylinderGeometry(P.r,P.r,.26,36),M(0x0c0d10,{roughness:.9}));tire.rotation.x=Math.PI/2;tire.position.set(cx,P.r,z);g.add(tire);
+    const rim=mesh(new T.CylinderGeometry(P.r*.66,P.r*.66,.27,24),M(0x1a1c20,{metalness:.7,roughness:.4}));rim.rotation.x=Math.PI/2;rim.position.set(cx,P.r,z);g.add(rim);
+    for(let i=0;i<3;i++){const sp=mesh(new T.BoxGeometry(P.r*1.26,.055,.03),spoke);sp.position.set(cx,P.r,z+sd*.14);sp.rotation.z=i*Math.PI/3;g.add(sp)}
+    const hub=mesh(new T.CylinderGeometry(P.r*.16,P.r*.16,.32,12),spoke);hub.rotation.x=Math.PI/2;hub.position.set(cx,P.r,z);g.add(hub)}
   const hy=P.gc+(P.b-P.gc)*.55;
-  for(const sd of[-1,1]){B(g,.1,.12,W*.2,M(0x202020,{emissive:0xeaf6ff,emissiveIntensity:1.4}),x0+.06,hy,sd*W*.3);B(g,.1,.09,W*.24,M(0x200000,{emissive:0xff2a2a,emissiveIntensity:1.2}),L/2-.05,P.gc+(P.b-P.gc)*.72,sd*W*.28)}
+  for(const sd of[-1,1]){B(g,.1,.12,W*.2,M(0x202020,{emissive:0xeaf6ff,emissiveIntensity:1.4}),x0+.06,hy,sd*W*.3);B(g,.1,.09,W*.24,M(0x200000,{emissive:0xff2a2a,emissiveIntensity:1.2}),L/2-.05,P.gc+(P.b-P.gc)*.72,sd*W*.28);
+    B(g,.13,.09,.17,paint,c[0]+(c[1]-c[0])*.35,yb+.07,sd*(Wc/2+.1))}
+  B(g,.09,(P.b-P.gc)*.26,W*.56,dark,x0+.05,P.gc+.05,0);B(g,.09,(P.b-P.gc)*.2,W*.5,dark,L/2-.05,P.gc+.04,0);
   if(P.wing){B(g,.4,.04,W*.96,M(0x111317,{metalness:.5,roughness:.4}),L/2-.32,P.b+P.wing,0);for(const sd of[-1,1])B(g,.08,P.wing+.02,.05,M(0x111317),L/2-.36,P.b-.02,sd*W*.3)}
   return g}
 function house(t){const g=new T.Group();HOUSE[t](g);return g}
@@ -497,12 +553,14 @@ const LS="ascend.state.v1";
 const fresh=()=>({v:1,updatedAt:0,xp:0,credits:0,area:{body:0,wealth:0,mind:0},tasks:{},done:{},owned:{house:["h0"],car:["c0"]},active:{house:"h0",car:"c0"},boss:{}});
 function normalize(s){const f=fresh();s=Object.assign(f,s||{});s.area=Object.assign({body:0,wealth:0,mind:0},s.area);
   s.owned={house:(s.owned&&s.owned.house)||["h0"],car:(s.owned&&s.owned.car)||["c0"]};s.active=Object.assign({house:"h0",car:"c0"},s.active);
-  s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};return s}
-let state=fresh();
+  s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};
+  if(!s.stock||!Array.isArray(s.stock.hist)||!s.stock.hist.length)s.stock={p:100,ath:100,hist:[[Date.now(),100,"ipo","Listed at 100.00"]],next:today(),perfect:{},ms:{}};
+  s.stock.perfect=s.stock.perfect||{};s.stock.ms=s.stock.ms||{};s.stock.next=s.stock.next||today();return s}
+let state=normalize(fresh());
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
-let ui={sel:today(),week:monOf(today()),tab:"missions",sound:true};
-try{const u=JSON.parse(localStorage.getItem("ascend.ui")||"{}");if(u.tab)ui.tab=u.tab;if(u.sound===false)ui.sound=false}catch(e){}
-const saveUi=()=>{try{localStorage.setItem("ascend.ui",JSON.stringify({tab:ui.tab,sound:ui.sound}))}catch(e){}};
+let ui={sel:today(),week:monOf(today()),tab:"missions",sound:true,range:"1M"};
+try{const u=JSON.parse(localStorage.getItem("ascend.ui")||"{}");if(u.tab)ui.tab=u.tab;if(u.range)ui.range=u.range;if(u.sound===false)ui.sound=false}catch(e){}
+const saveUi=()=>{try{localStorage.setItem("ascend.ui",JSON.stringify({tab:ui.tab,sound:ui.sound,range:ui.range}))}catch(e){}};
 
 /* ---------- sync ---------- */
 let dbDoc=null,saving=false,dirty=false,saveT=0;
@@ -524,7 +582,7 @@ async function initSync(){
   if(!db||!user)return setSync("local");
   const id=await user.id();if(!id)return setSync("local");
   dbDoc=db.doc("data/users/"+id+"/state");
-  const timer=setTimeout(()=>setSync("stale"),10000);
+  const timer=setTimeout(()=>{setSync("stale");settle()},10000);
   dbDoc.onSnapshot(snap=>{
     const m=snap.metadata;if(m.hasPendingWrites)return;
     if(!m.fromCache)clearTimeout(timer);
@@ -532,6 +590,7 @@ async function initSync(){
       if((r.updatedAt||0)>(state.updatedAt||0)){state=normalize(JSON.parse(JSON.stringify(r)));try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render()}
       else if(!m.fromCache&&(r.updatedAt||0)<(state.updatedAt||0))pushRemote();
     }else if(!m.fromCache&&state.updatedAt)pushRemote();
+    if(!m.fromCache)settle();
     if(!m.fromCache&&!dirty&&!saving)setSync("ok");
   },()=>{clearTimeout(timer);dbDoc=null;setSync("local")});
 }
@@ -552,17 +611,32 @@ function prune(){const cut=addD(today(),-200);for(const k of Object.keys(state.d
   for(const t of Object.values(state.tasks))if((t.date&&t.date<cut)||(t.until&&t.until<cut))delete state.tasks[t.id];
   for(const k of Object.keys(state.boss))if(k<cut)delete state.boss[k]}
 
+/* ---------- stock ---------- */
+function move(pct,kind,label,at){const s=state.stock;s.p=Math.max(1,Math.round(s.p*(1+pct/100)*100)/100);s.ath=Math.max(s.ath,s.p);s.hist.push([at||Date.now(),s.p,kind,String(label).slice(0,90)]);if(s.hist.length>500)s.hist.splice(0,s.hist.length-500)}
+const crashPct=n=>Math.min(60,Math.round(5+n/5));
+function settle(){const s=state.stock,t=today();let d=s.next,ch=false;if(d<addD(t,-45))d=addD(t,-45);
+  while(d<t){const ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length,at=Math.min(Date.now(),Math.max(pd(addD(d,1)).getTime()-1000,s.hist[s.hist.length-1][0]+1));
+    if(!ts.length){if(!hasDone(d))move(-2,"down",`No missions set on ${nice(d)}`,at)}
+    else if(c<ts.length)move(-(1-c/ts.length)*6,"down",`Missed ${ts.length-c} of ${ts.length} on ${nice(d)}`,at);
+    d=addD(d,1);ch=true}
+  if(ch){s.next=t;persist();render()}}
+function milestones(d){const s=state.stock,ts=tasksFor(d),dn=doneOn(d);
+  if(ts.length&&ts.every(x=>dn[x.id])&&!s.perfect[d]){s.perfect[d]=1;move(5,"mile",`Perfect day: ${nice(d)}`)}
+  const n=streakNow(),k="s"+n+":"+today();if(d===today()&&[3,7,14,30,60,100].includes(n)&&!s.ms[k]){s.ms[k]=1;move(n>=30?15:n>=7?10:5,"mile",`${n}-day streak`)}}
+function admit(n,note){const before=levelOf(state.xp).level,lost=Math.min(n,state.xp),pct=crashPct(n);state.xp-=lost;
+  move(-pct,"crash",`Admitted: ${note||"a slip"} (-${lost} XP)`);persist();closeModal();render();beep("crash");burst(null,"#ff5d6c",100);
+  const after=levelOf(state.xp).level;toast(`-${lost} XP · stock -${pct}%`+(after<before?` · back to level ${after}`:""),true)}
 function toggle(id,btn){
   const d=ui.sel,t=state.tasks[id];if(!t)return;
   if(d>today()){toast("You can plan this day, but you can only clear missions for today or earlier.",true);return}
   const before=levelOf(state.xp).level;
   if(!state.done[d])state.done[d]={};
   const rec=state.done[d][id];
-  if(rec){state.xp=Math.max(0,state.xp-rec[0]);state.credits-=rec[1];state.area[t.area]=Math.max(0,state.area[t.area]-rec[0]);delete state.done[d][id];if(!Object.keys(state.done[d]).length)delete state.done[d];beep("undo")}
-  else{const xp=Math.round(DIFF[t.diff].xp*multFor(d));state.done[d][id]=[xp,xp];state.xp+=xp;state.credits+=xp;state.area[t.area]+=xp;
+  if(rec){state.xp=Math.max(0,state.xp-rec[0]);state.credits-=rec[1];state.area[t.area]=Math.max(0,state.area[t.area]-rec[0]);delete state.done[d][id];if(!Object.keys(state.done[d]).length)delete state.done[d];move((1/(1+rec[0]/2500)-1)*100,"undo",`Undid: ${t.title}`);beep("undo")}
+  else{const xp=Math.round(DIFF[t.diff].xp*multFor(d));state.done[d][id]=[xp,xp];state.xp+=xp;state.credits+=xp;state.area[t.area]+=xp;move(xp/25,"up",t.title);milestones(d);
     burst(btn,getComputedStyle(btn.closest(".task")).getPropertyValue("--ac").trim());beep("ok");toast(`+${xp} XP · +${xp} credits`)}
-  persist();render();
-  const after=levelOf(state.xp).level;if(after>before)levelUp(after);
+  const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
+  persist();render();if(after>before)levelUp(after);
 }
 function addTask(title,area,diff,rep){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const t={id,title,area,diff,created:Date.now()};
@@ -573,7 +647,7 @@ function removeTask(id){const t=state.tasks[id];if(!t)return;
   persist();render();toast(t.date?"Mission removed":"Repeating mission stopped from this day on")}
 
 /* ---------- render ---------- */
-function render(){renderHud();renderHold();renderWeek();renderDay();renderBoss();renderAttr();renderShop();
+function render(){renderHud();renderHold();renderMarket();renderWeek();renderDay();renderBoss();renderAttr();renderShop();
   $("vMissions").hidden=ui.tab!=="missions";$("vShowroom").hidden=ui.tab!=="showroom";
   $("tabM").setAttribute("aria-selected",ui.tab==="missions");$("tabS").setAttribute("aria-selected",ui.tab==="showroom");
   $("sndUse").setAttribute("href",ui.sound?"#i-snd":"#i-mute")}
@@ -588,6 +662,40 @@ function renderHold(){syncStage();$("holdCards").innerHTML=["house","car"].map(k
     <span class="label">${kind==="house"?"Current base":"Current ride"}</span><h2>${esc(cur.name)}</h2>
     <div class="next mono">${nx?`<span>Next: ${esc(nx.name)}</span><div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div><span>${fmtN(Math.max(0,state.credits))}/${fmtN(nx.price)}</span>`:`<span>Every ${kind==="house"?"home":"car"} owned</span>`}</div>
   </div></button>`}).join("")}
+const pctTxt=v=>(v>=0?"▲ +":"▼ ")+v.toFixed(2)+"%";
+let chartCtx=null;
+function renderMarket(){const s=state.stock,h=s.hist,now=Date.now(),days={"1W":7,"1M":30}[ui.range];
+  let t0=days?now-days*864e5:h[0][0];t0=Math.max(t0,h[0][0]);if(now-t0<6e4)t0=now-6e4;
+  let start=h[0][1];const pts=[];for(const e of h){if(e[0]<t0)start=e[1];else pts.push(e)}
+  const chg=(s.p/start-1)*100,up=chg>=0;
+  $("mkP").textContent=s.p.toFixed(2);$("mkA").textContent=s.ath.toFixed(2);
+  $("mkD").innerHTML=`<b class="${up?"up":"dn"}">${pctTxt(chg)}</b><span>${days===7?"past week":days===30?"past month":"since listing"}</span>`;
+  const last=h[h.length-1];$("mkL").textContent=last[3];
+  for(const b of $("mkR").children)b.setAttribute("aria-pressed",b.dataset.rng===ui.range);
+  // feed
+  $("feed").innerHTML=h.slice(-5).reverse().map(e=>{const i=h.indexOf(e),pv=i>0?h[i-1][1]:e[1],d=(e[1]/pv-1)*100,dt=new Date(e[0]);
+    return `<li><b class="${d>=0?"up":"dn"}">${i?pctTxt(d):"IPO"}</b><span class="fl">${esc(e[3])}</span><span class="ft mono">${MON[dt.getMonth()]} ${dt.getDate()}, ${pad(dt.getHours())}:${pad(dt.getMinutes())}</span></li>`}).join("");
+  // chart
+  const host=$("chart"),W=Math.max(260,host.clientWidth||600),H=210,pl=4,pr=56,pt=12,pb=24,vals=[start].concat(pts.map(e=>e[1]));
+  let lo=Math.min.apply(0,vals),hi=Math.max.apply(0,vals);if(hi-lo<2){lo-=1.5;hi+=1.5}const padY=(hi-lo)*.12;lo-=padY;hi+=padY;
+  const X=t=>pl+(t-t0)/(now-t0)*(W-pl-pr),Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),col=up?"var(--ok)":"var(--bad)";
+  let d=`M${X(t0).toFixed(1)} ${Y(start).toFixed(1)}`;for(const e of pts)d+=`H${X(e[0]).toFixed(1)}V${Y(e[1]).toFixed(1)}`;d+=`H${X(now).toFixed(1)}`;
+  let g="";for(let i=0;i<3;i++){const v=lo+padY+(hi-lo-2*padY)*i/2,y=Y(v).toFixed(1);g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${W-pr+8}" y="${+y+4}">${v.toFixed(2)}</text>`}
+  const marks=pts.filter(e=>e[2]==="mile"||e[2]==="crash").map(e=>`<circle cx="${X(e[0]).toFixed(1)}" cy="${Y(e[1]).toFixed(1)}" r="4.5" fill="${e[2]==="mile"?"var(--credit)":"var(--bad)"}" stroke="var(--panel)" stroke-width="2"/>`).join("");
+  const sd=new Date(t0);
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="mkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${up?"#3fe0a0":"#ff5d6c"}" stop-opacity=".28"/><stop offset="1" stop-color="${up?"#3fe0a0":"#ff5d6c"}" stop-opacity="0"/></linearGradient></defs>
+    ${g}<path d="${d}V${H-pb}H${X(t0).toFixed(1)}Z" fill="url(#mkG)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>${marks}
+    <circle cx="${X(now).toFixed(1)}" cy="${Y(s.p).toFixed(1)}" r="4" fill="${col}" stroke="var(--panel)" stroke-width="2"/>
+    <line id="mkX" y1="${pt}" y2="${H-pb}" stroke="var(--ink-3)" stroke-width="1" visibility="hidden"/>
+    <text x="${pl}" y="${H-6}">${MON[sd.getMonth()]} ${sd.getDate()}${now-t0<864e5?`, ${pad(sd.getHours())}:${pad(sd.getMinutes())}`:""}</text><text x="${W-pr}" y="${H-6}" text-anchor="end">Now</text></svg><div class="tip" id="mkTip" hidden></div>`;
+  chartCtx={pts,X,Y,start,W,h}}
+function chartHover(e){const c=chartCtx,host=$("chart"),tip=$("mkTip"),ln=$("mkX");if(!c||!tip)return;
+  if(e.type==="pointerleave"||!c.pts.length){tip.hidden=true;if(ln)ln.setAttribute("visibility","hidden");return}
+  const r=host.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*c.W;let best=c.pts[0];for(const p of c.pts)if(Math.abs(c.X(p[0])-px)<Math.abs(c.X(best[0])-px))best=p;
+  const i=c.h.indexOf(best),pv=i>0?c.h[i-1][1]:best[1],d=(best[1]/pv-1)*100,dt=new Date(best[0]),x=c.X(best[0]);
+  ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");
+  tip.innerHTML=`<b>${best[1].toFixed(2)} <span class="${d>=0?"up":"dn"}">${i?pctTxt(d):""}</span></b><span>${esc(best[3])}</span><span class="mono">${MON[dt.getMonth()]} ${dt.getDate()}, ${pad(dt.getHours())}:${pad(dt.getMinutes())}</span>`;
+  tip.hidden=false;const sx=x/c.W*r.width,tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(r.width-tw,sx<r.width/2?sx+12:sx-tw-12))+"px"}
 function renderWeek(){const t=today(),w=ui.week;
   $("weekLabel").textContent=w===monOf(t)?"This week":`Week of ${nice(w)}`;
   $("week").innerHTML=DOW.map((n,i)=>{const d=addD(w,i),ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length,full=ts.length>0&&c===ts.length;
@@ -651,6 +759,17 @@ function openItem(id){closeModal();const kind=id[0]==="h"?"house":"car",it=CAT[k
     <div class="sb"><span class="label">${kind==="house"?"Home":"Car"} · Tier ${it.tier}</span><h3>${esc(it.name)}</h3><p>${esc(msg)}</p>${o?"":`<span class="price">${ic("coin")} ${fmtN(it.price)} credits</span>`}<div class="acts">${act}</div></div></div></div>`;
   if(A3D){mv=A3D.viewer($("mCanvas"),{auto:true});
     if(mv){try{mv.set(kind==="house"?A3D.house(it.tier-1):A3D.car(it.tier-1),kind==="house"?-.2:0);$("mView").dataset.mode="3d";$("vtBtn").hidden=false}catch(e){mv.dispose();mv=null}}}}
+function openAdmit(){closeModal();$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Admit a slip"><form class="sb" id="admitForm" autocomplete="off">
+  <span class="label" style="color:var(--bad)">Honesty costs less than hiding it</span><h3>Admit a slip</h3>
+  <p>Say what happened and how much XP you deserve to lose. Your stock takes the hit too.</p>
+  <label class="field"><span class="label">What happened</span><input type="text" id="slipNote" maxlength="60" placeholder="e.g. Skipped the gym and scrolled for 3 hours"></label>
+  <label class="field"><span class="label">XP to lose</span><input type="number" id="slipXp" min="1" max="100000" step="1" inputmode="numeric" value="50"></label>
+  <div class="sugg" style="justify-content:flex-start">${[25,50,100,250].map(v=>`<button type="button" class="chipbtn" data-slip="${v}">${v} XP</button>`).join("")}</div>
+  <p id="slipPrev" class="mono"></p>
+  <div class="acts"><button class="go" type="submit" style="background:var(--bad)">Take the hit</button><button class="go ghost" type="button" data-close>Cancel</button></div></form></div></div>`;slipPreview()}
+function slipPreview(){const el=$("slipPrev");if(!el)return;const n=Math.max(0,Math.floor(+$("slipXp").value||0));if(!n){el.textContent="Enter how much XP to lose.";return}
+  const lost=Math.min(n,state.xp),pct=crashPct(n),np=Math.max(1,state.stock.p*(1-pct/100)),lv=levelOf(state.xp).level,nl=levelOf(state.xp-lost).level;
+  el.textContent=`-${lost} XP${lost<n?" (all you have)":""} · stock ${state.stock.p.toFixed(2)} → ${np.toFixed(2)} (-${pct}%)`+(nl<lv?` · level ${lv} → ${nl}`:"")}
 function confirmReset(){$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true"><div class="sb"><h3>Reset all progress?</h3><p>This erases your level, credits, missions, homes and cars on every synced device. It can't be undone.</p><div class="acts"><button class="go" type="button" style="background:var(--bad)" data-reset>Erase everything</button><button class="go ghost" type="button" data-close>Keep my progress</button></div></div></div></div>`}
 function levelUp(l){beep("level");const el=document.createElement("div");el.className="levelup";el.innerHTML=`<div><small>LEVEL UP</small><b>${l}</b><span>${rankOf(l)}</span></div>`;
   document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,2400);burst(null,"#58e1ff",90)}
@@ -659,7 +778,7 @@ function toast(msg,bad){const el=document.createElement("div");el.className="toa
 /* ---------- fx ---------- */
 let actx=null;
 function beep(kind){if(!ui.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-  const seq={ok:[[660,0],[990,.07]],undo:[[330,0]],level:[[523,0],[659,.1],[784,.2],[1047,.3]],buy:[[392,0],[523,.09],[784,.18]]}[kind]||[];
+  const seq={ok:[[660,0],[990,.07]],undo:[[330,0]],crash:[[300,0],[220,.1],[150,.2],[90,.32]],level:[[523,0],[659,.1],[784,.2],[1047,.3]],buy:[[392,0],[523,.09],[784,.18]]}[kind]||[];
   for(const[f,at]of seq){const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+at;o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.25)}}catch(e){}}
 const fx=$("fx"),fctx=fx.getContext("2d");let parts=[],raf=0;
 const still=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -682,28 +801,35 @@ document.addEventListener("click",e=>{const t=e.target.closest("button,[data-clo
   else if(d.sugg){const s=SUGG[+d.sugg];addTask(s[0],s[1],s[2],"once")}
   else if(d.item)openItem(d.item);
   else if(d.buy){const kind=d.buy[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===d.buy);
-    if(it&&state.credits>=it.price&&levelOf(state.xp).level>=it.lvl&&!state.owned[kind].includes(it.id)){state.credits-=it.price;state.owned[kind].push(it.id);state.active[kind]=it.id;persist();closeModal();render();beep("buy");burst(null,"#ffc24a",110);toast(`${it.name} is yours`)}}
+    if(it&&state.credits>=it.price&&levelOf(state.xp).level>=it.lvl&&!state.owned[kind].includes(it.id)){state.credits-=it.price;state.owned[kind].push(it.id);state.active[kind]=it.id;if(it.price>0)move(3,"mile",`Bought ${it.name}`);persist();closeModal();render();beep("buy");burst(null,"#ffc24a",110);toast(`${it.name} is yours`)}}
   else if(d.use){const kind=d.use[0]==="h"?"house":"car";if(state.owned[kind].includes(d.use)){state.active[kind]=d.use;persist();closeModal();render()}}
+  else if(d.rng){ui.range=d.rng;saveUi();renderMarket()}
+  else if(d.slip){$("slipXp").value=d.slip;slipPreview()}
+  else if(t.id==="admitBtn")openAdmit();
   else if("vt" in d){const v=$("mView"),to=v.dataset.mode==="3d"?"photo":"3d";v.dataset.mode=to;t.textContent=to==="3d"?"Photo":"3D model"}
-  else if("reset" in d){state=fresh();persist();closeModal();render();toast("Progress reset")}
+  else if("reset" in d){state=normalize(fresh());persist();closeModal();render();toast("Progress reset")}
   else if("close" in d){if(t.tagName==="BUTTON"||(e.target===t&&downT===t))closeModal()}
   else if(t.id==="wkPrev"||t.id==="wkNext"){ui.week=addD(ui.week,t.id==="wkPrev"?-7:7);ui.sel=addD(ui.week,dow(ui.sel));render()}
   else if(t.id==="wkNow"){ui.sel=today();ui.week=monOf(ui.sel);render()}
   else if(t.id==="sndBtn"){ui.sound=!ui.sound;saveUi();render();if(ui.sound)beep("ok")}
   else if(t.id==="resetBtn")confirmReset();
-  else if(t.id==="claimBtn"){const b=state.boss[ui.week];if(b&&!b.claimed&&weekDmg(ui.week)>=BOSS[b.tier].hp){const T=BOSS[b.tier],before=levelOf(state.xp).level;b.claimed=true;state.credits+=T.loot;state.xp+=T.loot/2;persist();render();beep("buy");burst(t,"#ff4f8b",80);toast(`Boss defeated: +${T.loot} credits, +${T.loot/2} XP`);const a=levelOf(state.xp).level;if(a>before)levelUp(a)}}
+  else if(t.id==="claimBtn"){const b=state.boss[ui.week];if(b&&!b.claimed&&weekDmg(ui.week)>=BOSS[b.tier].hp){const T=BOSS[b.tier],before=levelOf(state.xp).level;b.claimed=true;state.credits+=T.loot;state.xp+=T.loot/2;move(12,"mile",`Boss defeated: ${b.name}`);if(levelOf(state.xp).level>before)move(8,"mile",`Reached level ${levelOf(state.xp).level}`);persist();render();beep("buy");burst(t,"#ff4f8b",80);toast(`Boss defeated: +${T.loot} credits, +${T.loot/2} XP`);const a=levelOf(state.xp).level;if(a>before)levelUp(a)}}
 });
+document.addEventListener("input",e=>{if(e.target.id==="slipXp")slipPreview()});
+for(const ev of["pointermove","pointerdown","pointerleave"])$("chart").addEventListener(ev,chartHover);
+let rzT=0;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(renderMarket,150)});
 let downT=null;document.addEventListener("pointerdown",e=>{downT=e.target},true);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
   if(f.id==="addForm"){const title=$("taskTitle").value.trim();if(!title){$("taskTitle").focus();return}
     addTask(title,f.area.value,f.diff.value,f.rep.value);$("taskTitle").value="";$("rOnce").checked=true;$("taskTitle").focus()}
+  else if(f.id==="admitForm"){const n=Math.floor(+$("slipXp").value||0);if(n<1){$("slipXp").focus();return}admit(n,$("slipNote").value.trim())}
   else if(f.id==="bossForm"){const name=$("bossName").value.trim();if(!name){$("bossName").focus();return}
     state.boss[ui.week]={name,tier:f.tier.value,claimed:false};persist();render();toast("Boss summoned")}
 });
 // roll the day over if the page stays open past midnight
-let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;render()}},60000);
+let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;settle();render()}},60000);
 
-prune();initStage();render();initSync();
+prune();initStage();render();initSync().then(()=>{if(!dbDoc)settle()});
 })();
 </script>
