@@ -1,0 +1,556 @@
+<title>Ascend Protocol</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky HUD strip on top, a "holdings" band of two live photos, then a mission deck (week rail + day log) beside a side rail (boss, attributes). One committed dark cockpit look. */
+:root{
+  color-scheme:dark;
+  --void:#060a13; --hull:#0c1322; --panel:#111a2d; --panel-2:#16223a; --line:#24344f; --line-hi:#3a5278;
+  --ink:#e8f1ff; --ink-2:#9fb2cf; --ink-3:#647794;
+  --ion:#58e1ff; --ion-dim:#1f6f8a; --credit:#ffc24a; --boss:#ff4f8b;
+  --body:#ff8058; --wealth:#3fe0a0; --mind:#b193ff;
+  --ok:#3fe0a0; --bad:#ff5d6c;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --cut:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  --cut-sm:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+}
+*{box-sizing:border-box}
+body{background:var(--void);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  background-image:radial-gradient(900px 500px at 85% -10%,rgba(88,225,255,.10),transparent 60%),radial-gradient(700px 500px at -10% 30%,rgba(177,147,255,.07),transparent 60%),
+  linear-gradient(rgba(88,225,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(88,225,255,.035) 1px,transparent 1px);
+  background-size:auto,auto,44px 44px,44px 44px;background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--hull)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--ion);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font-family:var(--f-display);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* HUD */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(12,19,34,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hud .wrap{display:flex;align-items:center;gap:18px;padding-block:10px;flex-wrap:wrap}
+.lvl{display:flex;align-items:center;gap:12px;flex:1 1 300px;min-width:0}
+.hex{width:52px;height:58px;flex:none;display:grid;place-items:center;background:linear-gradient(160deg,var(--ion),#2b7fd8);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.hex b{display:grid;place-items:center;width:46px;height:52px;background:var(--hull);clip-path:inherit;font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--ion)}
+.lvl-info{flex:1;min-width:0;display:grid;gap:5px}
+.lvl-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.rank{font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xpnum{font-size:12px;color:var(--ink-2);white-space:nowrap}
+.bar{height:8px;background:#0a1120;border:1px solid var(--line);position:relative;overflow:hidden}
+.bar>i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--ion-dim),var(--ion));transition:width .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 12px rgba(88,225,255,.6)}
+.stats{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.stat{display:grid;gap:1px;padding:6px 12px;background:var(--panel);border:1px solid var(--line);clip-path:var(--cut-sm);min-width:92px}
+.stat .v{font-family:var(--f-display);font-weight:700;font-size:19px;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.stat.cr .v{color:var(--credit)} .stat.st .v{color:var(--body)} .stat.neg .v{color:var(--bad)}
+.stat small{font-size:11px;color:var(--ink-3)}
+.iconbtn{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);clip-path:var(--cut-sm);font-size:17px}
+.iconbtn:hover{color:var(--ion);border-color:var(--ion-dim)}
+.sync{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
+.sync[data-s=ok]::before{background:var(--ok);box-shadow:0 0 8px var(--ok)} .sync[data-s=saving]::before{background:var(--credit)} .sync[data-s=stale]::before{background:var(--bad)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin-top:18px;border-bottom:1px solid var(--line)}
+.tab{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:13px;padding:10px 16px;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--ion);border-color:var(--ion)}
+.tab:hover{color:var(--ink)}
+
+/* holdings */
+.hold{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.asset{position:relative;aspect-ratio:16/8.2;max-width:100%;clip-path:var(--cut);background:var(--panel) center/cover no-repeat;display:flex;flex-direction:column;justify-content:flex-end;text-align:left;min-width:0;overflow:hidden}
+.asset::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,10,19,.15) 20%,rgba(6,10,19,.93) 88%)}
+.asset::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);pointer-events:none}
+.asset>div{position:relative;padding:14px 16px;display:grid;gap:6px}
+.asset h2{margin:0;font-family:var(--f-display);font-size:clamp(18px,2.6vw,26px);font-weight:700;letter-spacing:.03em;text-wrap:balance}
+.asset .label{color:var(--ion)}
+.next{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2)}
+.next .bar{flex:1;height:5px}.next .bar>i{background:linear-gradient(90deg,#7a5a17,var(--credit));box-shadow:none}
+.asset:hover h2{color:var(--ion)}
+
+/* deck */
+.deck{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;margin-top:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);padding:16px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.panel-h h3{margin:0;font-family:var(--f-display);font-size:17px;font-weight:700;letter-spacing:.04em}
+.weeknav{display:flex;align-items:center;gap:6px}
+.chipbtn{font-family:var(--f-display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:7px 11px;border:1px solid var(--line);color:var(--ink-2);background:var(--hull);clip-path:var(--cut-sm)}
+.chipbtn:hover{border-color:var(--ion-dim);color:var(--ion)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{display:grid;gap:4px;justify-items:center;padding:9px 2px 8px;background:var(--hull);border:1px solid var(--line);clip-path:var(--cut-sm);position:relative}
+.day .dow{font-family:var(--f-display);font-size:11px;letter-spacing:.12em;color:var(--ink-3);font-weight:600}
+.day .num{font-family:var(--f-display);font-size:20px;font-weight:700;line-height:1}
+.day .cnt{font-size:10.5px;color:var(--ink-3)}
+.day .bar{width:70%;height:4px}
+.day.today .dow{color:var(--ion)}
+.day.today::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--ion)}
+.day[aria-pressed=true]{background:var(--panel-2);border-color:var(--ion);box-shadow:inset 0 0 22px rgba(88,225,255,.14)}
+.day.full .bar>i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.day:hover{border-color:var(--line-hi)}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:18px 0 10px;flex-wrap:wrap}
+.dayhead h3{margin:0;font-family:var(--f-display);font-size:20px;font-weight:700}
+.dayhead span{font-size:12px;color:var(--ink-2)}
+.tasks{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.task{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--hull);border:1px solid var(--line);border-left:3px solid var(--ac);clip-path:var(--cut-sm);min-width:0}
+.task[data-area=body]{--ac:var(--body)} .task[data-area=wealth]{--ac:var(--wealth)} .task[data-area=mind]{--ac:var(--mind)}
+.chk{width:30px;height:30px;flex:none;border:2px solid var(--ac);display:grid;place-items:center;clip-path:var(--cut-sm);color:transparent;font-size:18px;transition:background .15s}
+.chk:hover{background:color-mix(in srgb,var(--ac) 22%,transparent)}
+.task.done .chk{background:var(--ac);color:var(--void)}
+.task.done .t-title{color:var(--ink-3);text-decoration:line-through}
+.task.locked .chk{border-style:dashed;opacity:.5;cursor:not-allowed}
+.t-main{flex:1;min-width:0;display:grid;gap:3px}
+.t-title{font-weight:500;overflow-wrap:anywhere}
+.t-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--ink-3);align-items:center}
+.t-meta b{color:var(--ac);font-weight:500;text-transform:uppercase;letter-spacing:.08em;font-family:var(--f-display)}
+.t-xp{font-family:var(--f-display);font-weight:700;color:var(--ion);white-space:nowrap;font-size:14px}
+.task.done .t-xp{color:var(--ok)}
+.del{color:var(--ink-3);font-size:16px;width:28px;height:28px;display:grid;place-items:center}
+.del:hover{color:var(--bad)}
+.empty{border:1px dashed var(--line-hi);padding:18px;text-align:center;color:var(--ink-2);display:grid;gap:10px;justify-items:center}
+.sugg{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+
+/* add form */
+.add{margin-top:14px;display:grid;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.add-row{display:flex;gap:8px}
+.add input[type=text]{flex:1;min-width:0;background:var(--void);border:1px solid var(--line-hi);padding:11px 12px;clip-path:var(--cut-sm)}
+.add input[type=text]:focus{outline:0;border-color:var(--ion)}
+.go{font-family:var(--f-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;padding:0 18px;background:var(--ion);color:var(--void);clip-path:var(--cut-sm);min-height:42px;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.go:hover{filter:brightness(1.12)} .go[disabled]{background:var(--line);color:var(--ink-3);cursor:not-allowed;filter:none}
+.go.gold{background:var(--credit)} .go.ghost{background:transparent;border:1px solid var(--line-hi);color:var(--ink)}
+.opts{display:flex;gap:14px 18px;flex-wrap:wrap}
+.seg{display:grid;gap:5px;border:0;padding:0;margin:0;min-width:0}
+.seg legend{padding:0;margin-bottom:5px}
+.seg div{display:flex;flex-wrap:wrap;gap:4px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:6px 10px;font-size:12px;border:1px solid var(--line);background:var(--hull);color:var(--ink-2);clip-path:var(--cut-sm);white-space:nowrap}
+.seg input:checked+span{border-color:var(--sc,var(--ion));color:var(--sc,var(--ion));background:color-mix(in srgb,var(--sc,var(--ion)) 14%,var(--hull))}
+.seg input:focus-visible+span{outline:2px solid var(--ion)}
+
+/* rail */
+.rail{display:grid;gap:18px;min-width:0}
+.boss{border-color:#5a2440}
+.boss h3{color:var(--boss)}
+.boss .bar{height:14px}.boss .bar>i{background:linear-gradient(90deg,#8a1f4a,var(--boss));box-shadow:0 0 12px rgba(255,79,139,.5)}
+.boss-name{font-family:var(--f-display);font-size:19px;font-weight:700;margin:0 0 4px;overflow-wrap:anywhere}
+.boss p{margin:0 0 10px;font-size:13px;color:var(--ink-2)}
+.boss-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:6px}
+.boss form{display:grid;gap:10px}
+.boss input[type=text]{background:var(--void);border:1px solid var(--line-hi);padding:10px 12px;clip-path:var(--cut-sm);width:100%}
+.attr{display:grid;gap:12px}
+.attr-i{display:grid;gap:5px}
+.attr-i div{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.attr-i b{font-family:var(--f-display);letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--ac)}
+.attr-i span{font-size:11.5px;color:var(--ink-3)}
+.attr-i .bar>i{background:var(--ac);box-shadow:none}
+.rules{font-size:12.5px;color:var(--ink-2);margin:0;padding-left:18px;display:grid;gap:5px}
+
+/* showroom */
+.shop-h{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px;gap:10px;flex-wrap:wrap}
+.shop-h h3{margin:0;font-family:var(--f-display);font-size:20px;letter-spacing:.06em;text-transform:uppercase}
+.shop-h span{font-size:12px;color:var(--ink-3)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:620px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);text-align:left;display:flex;flex-direction:column;min-width:0}
+.card:hover{border-color:var(--line-hi)}
+.card .ph{aspect-ratio:16/10;max-width:100%;background:var(--hull) center/cover no-repeat;position:relative}
+.card.lock .ph{filter:grayscale(1) brightness(.45)}
+.card .tier{position:absolute;top:8px;left:10px;font-family:var(--f-mono);font-size:11px;background:rgba(6,10,19,.8);padding:2px 7px;color:var(--ink-2)}
+.card .badge{position:absolute;top:8px;right:14px;font-family:var(--f-display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:3px 8px;background:var(--ok);color:var(--void)}
+.card .badge.cur{background:var(--ion)}
+.card .lk{position:absolute;inset:0 0 auto 0;aspect-ratio:16/10;display:grid;place-items:center;font-family:var(--f-display);letter-spacing:.14em;font-size:13px;font-weight:700;color:var(--ink);text-transform:uppercase}
+.card .lk span{display:flex;align-items:center;gap:8px;background:rgba(6,10,19,.75);padding:6px 12px;border:1px solid var(--line-hi)}
+.card .cb{padding:12px 14px 14px;display:grid;gap:3px}
+.card h4{margin:0;font-family:var(--f-display);font-size:16px;font-weight:700}
+.card p{margin:0;font-size:12.5px;color:var(--ink-3)}
+.price{font-family:var(--f-display);font-weight:700;color:var(--credit);margin-top:5px;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.price.cant{color:var(--ink-3)}
+.credits-note{font-size:11.5px;color:var(--ink-3);margin:26px 0 30px}
+.credits-note a{color:var(--ink-2)}
+
+/* overlays */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(3,6,12,.82);display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}
+.sheet{width:min(560px,100%);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line-hi);clip-path:var(--cut)}
+.sheet img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.sheet .sb{padding:18px;display:grid;gap:10px}
+.sheet h3{margin:0;font-family:var(--f-display);font-size:24px}
+.sheet p{margin:0;color:var(--ink-2);font-size:14px}
+.sheet .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.sheet .acts .go{flex:1 1 160px}
+.levelup{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle,rgba(88,225,255,.22),rgba(3,6,12,.92) 60%);text-align:center;animation:fade .25s}
+.levelup div{display:grid;gap:6px;animation:rise .5s cubic-bezier(.2,.9,.2,1.2)}
+.levelup small{font-family:var(--f-display);letter-spacing:.4em;color:var(--ion);font-size:14px}
+.levelup b{font-family:var(--f-display);font-size:clamp(64px,18vw,150px);line-height:.95;color:var(--ink);text-shadow:0 0 40px rgba(88,225,255,.8)}
+.levelup span{font-family:var(--f-display);letter-spacing:.2em;text-transform:uppercase;font-size:18px;color:var(--ink-2)}
+@keyframes fade{from{opacity:0}} @keyframes rise{from{transform:scale(.7);opacity:0}}
+.toasts{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;display:grid;justify-items:center;gap:8px;pointer-events:none;padding:0 16px}
+.toast{background:var(--panel-2);border:1px solid var(--ion-dim);padding:9px 16px;font-size:13.5px;clip-path:var(--cut-sm);animation:rise .25s}
+.toast.bad{border-color:var(--bad)}
+#fx{position:fixed;inset:0;z-index:65;pointer-events:none;width:100%;height:100%}
+
+@media (max-width:900px){.deck{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:620px){
+  .hold{grid-template-columns:1fr}.asset{aspect-ratio:16/7}
+  .stat{min-width:0;flex:1;padding:5px 9px}.stat .v{font-size:16px}
+  .hud .wrap{gap:10px}.sync{display:none}
+  .day .num{font-size:17px}.day .cnt{display:none}
+  .panel{padding:13px}.tab{padding:10px 12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<svg hidden>
+  <symbol id="i-coin" viewBox="0 0 24 24"><path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/><path d="M12 8v8M9 10.5h4.5a1.5 1.5 0 010 3H9"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22c4 0 7-3 7-7 0-4-3-6-4-10-3 2-4 5-4 7-1-1-2-2-2-4-2 2-4 5-4 8 0 3.5 3 6 7 6z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5" stroke-width="3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-rep" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 013-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 01-3 3H3"/></symbol>
+  <symbol id="i-snd" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
+  <symbol id="i-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+</svg>
+
+<header class="hud"><div class="wrap">
+  <div class="lvl">
+    <div class="hex"><b id="hLevel">1</b></div>
+    <div class="lvl-info">
+      <div class="lvl-top"><span class="rank" id="hRank">Recruit</span><span class="xpnum mono" id="hXp">0 / 100 XP</span></div>
+      <div class="bar"><i id="hBar" style="width:0%"></i></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat cr" id="sCr"><span class="label">Credits</span><span class="v"><svg class="i"><use href="#i-coin"/></svg><span id="hCr">0</span></span></div>
+    <div class="stat st"><span class="label">Streak</span><span class="v"><svg class="i"><use href="#i-flame"/></svg><span id="hSt">0</span></span><small id="hMult">+0% XP</small><!-- streak bonus applied to today's missions --></div>
+    <button class="iconbtn" id="sndBtn" type="button" aria-label="Toggle sound"><svg class="i"><use id="sndUse" href="#i-snd"/></svg></button>
+  </div>
+  <span class="sync" id="sync" data-s="wait">Connecting</span>
+</div></header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabM" data-tab="missions" aria-selected="true" type="button">Missions</button>
+    <button class="tab" role="tab" id="tabS" data-tab="showroom" aria-selected="false" type="button">Showroom</button>
+  </nav>
+
+  <section id="vMissions">
+    <div class="hold" id="hold"></div>
+    <div class="deck">
+      <div class="panel">
+        <div class="panel-h">
+          <h3 id="weekLabel">This week</h3>
+          <div class="weeknav">
+            <button class="chipbtn" type="button" id="wkPrev" aria-label="Previous week"><svg class="i"><use href="#i-l"/></svg></button>
+            <button class="chipbtn" type="button" id="wkNow">Today</button>
+            <button class="chipbtn" type="button" id="wkNext" aria-label="Next week"><svg class="i"><use href="#i-r"/></svg></button>
+          </div>
+        </div>
+        <div class="week" id="week"></div>
+        <div class="dayhead"><h3 id="dayTitle"></h3><span class="mono" id="daySum"></span></div>
+        <ul class="tasks" id="tasks"></ul>
+        <form class="add" id="addForm" autocomplete="off">
+          <div class="add-row">
+            <input type="text" id="taskTitle" maxlength="90" placeholder="New mission, e.g. 45 min workout" aria-label="Mission name">
+            <button class="go" type="submit" id="addBtn">Add</button>
+          </div>
+          <div class="opts">
+            <fieldset class="seg"><legend class="label">Area</legend><div>
+              <label style="--sc:var(--body)"><input type="radio" name="area" id="aBody" value="body" checked><span>Body</span></label>
+              <label style="--sc:var(--wealth)"><input type="radio" name="area" id="aWealth" value="wealth"><span>Wealth</span></label>
+              <label style="--sc:var(--mind)"><input type="radio" name="area" id="aMind" value="mind"><span>Mind</span></label>
+            </div></fieldset>
+            <fieldset class="seg"><legend class="label">Difficulty</legend><div>
+              <label><input type="radio" name="diff" id="dEasy" value="easy"><span>Easy 10</span></label>
+              <label><input type="radio" name="diff" id="dMed" value="medium" checked><span>Medium 25</span></label>
+              <label><input type="radio" name="diff" id="dHard" value="hard"><span>Hard 50</span></label>
+              <label><input type="radio" name="diff" id="dEpic" value="epic"><span>Epic 100</span></label>
+            </div></fieldset>
+            <fieldset class="seg"><legend class="label">Repeat</legend><div>
+              <label><input type="radio" name="rep" id="rOnce" value="once" checked><span>This day only</span></label>
+              <label><input type="radio" name="rep" id="rWeek" value="weekly"><span id="rWeekLbl">Every week</span></label>
+              <label><input type="radio" name="rep" id="rDaily" value="daily"><span>Every day</span></label>
+            </div></fieldset>
+          </div>
+        </form>
+      </div>
+
+      <aside class="rail">
+        <div class="panel boss" id="boss"></div>
+        <div class="panel">
+          <div class="panel-h"><h3>Attributes</h3></div>
+          <div class="attr" id="attr"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Rules</h3></div>
+          <ul class="rules">
+            <li>Clearing a mission pays XP and the same number of credits.</li>
+            <li>XP raises your level and never drops. Credits buy homes and cars.</li>
+            <li>Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
+            <li>You can plan future days but only clear today or earlier.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="vShowroom" hidden>
+    <div class="shop-h"><h3>Homes</h3><span id="homeCount"></span></div>
+    <div class="grid" id="gHouse"></div>
+    <div class="shop-h"><h3>Garage</h3><span id="carCount"></span></div>
+    <div class="grid" id="gCar"></div>
+  </section>
+
+  <p class="credits-note">Photos from Unsplash photographers, used under the Unsplash License. <button class="chipbtn" type="button" id="resetBtn" style="margin-left:8px">Reset all progress</button></p>
+</main>
+
+<div id="modalHost"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<canvas id="fx"></canvas>
+
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ic=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+const fmtN=n=>Math.round(n).toLocaleString("en-US");
+
+/* ---------- catalog ---------- */
+const DIFF={easy:{xp:10,label:"Easy"},medium:{xp:25,label:"Medium"},hard:{xp:50,label:"Hard"},epic:{xp:100,label:"Epic"}};
+const AREAS={body:"Body",wealth:"Wealth",mind:"Mind"};
+const RANKS=["Recruit","Operator","Specialist","Vanguard","Elite","Commander","Legend"];
+const LVL_REQ=[1,2,4,6,9,12,16,20,25];
+const mk=(k,prices,rows)=>rows.map((r,i)=>({id:k+i,kind:k==="h"?"house":"car",name:r[0],tag:r[1],price:prices[i],lvl:LVL_REQ[i],img:`img/${k}${i+1}.jpg`,tier:i+1}));
+const HOUSES=mk("h",[0,300,750,1500,3000,5500,9000,14000,22000],[
+ ["Hilltop Shack","One room and a view. Everyone starts here."],["Studio Flat","Your own keys, your own rules."],["City Apartment","Light, space and a real kitchen."],
+ ["Row Townhouse","Three floors on a good street."],["Suburban Home","Double garage and a front lawn."],["Lakeside Lodge","Timber, glass and quiet evenings."],
+ ["Architect's Residence","Built around a hundred-year-old tree."],["Hillside Villa","Infinity pool above the coast."],["Glass Estate","The top of the ladder."]]);
+const CARS=mk("c",[0,200,500,1100,2200,4000,6500,10000,16000],[
+ ["Rusted Classic","It runs. Mostly."],["City Runabout","Small, cheap, parks anywhere."],["Daily Hatchback","Reliable and paid off."],
+ ["Electric Sedan","Silent and quick off the line."],["Muscle Coupe","V8 noise on demand."],["Track Coupe","Rear wing, roll cage, no back seats."],
+ ["Mid-Engine Supercar","Carbon tub, 700 horsepower."],["V12 Hybrid Hypercar","Fewer than 500 built."],["Sixteen-Cylinder Flagship","The last word in fast."]]);
+const CAT={house:HOUSES,car:CARS};
+const BOSS={minion:{hp:300,loot:100,label:"Minion"},brute:{hp:600,loot:250,label:"Brute"},titan:{hp:1000,loot:500,label:"Titan"}};
+const SUGG=[["45 min workout","body","hard"],["One hour of focused work on my business","wealth","hard"],["10 min of planning tomorrow","mind","easy"]];
+
+/* ---------- dates ---------- */
+const pad=n=>String(n).padStart(2,"0");
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const addD=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
+const dow=s=>(pd(s).getDay()+6)%7; // Mon=0
+const monOf=s=>addD(s,-dow(s));
+const today=()=>ds(new Date());
+const DOW=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], DOWL=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const nice=s=>{const d=pd(s);return `${MON[d.getMonth()]} ${d.getDate()}`};
+
+/* ---------- state ---------- */
+const LS="ascend.state.v1";
+const fresh=()=>({v:1,updatedAt:0,xp:0,credits:0,area:{body:0,wealth:0,mind:0},tasks:{},done:{},owned:{house:["h0"],car:["c0"]},active:{house:"h0",car:"c0"},boss:{}});
+function normalize(s){const f=fresh();s=Object.assign(f,s||{});s.area=Object.assign({body:0,wealth:0,mind:0},s.area);
+  s.owned={house:(s.owned&&s.owned.house)||["h0"],car:(s.owned&&s.owned.car)||["c0"]};s.active=Object.assign({house:"h0",car:"c0"},s.active);
+  s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};return s}
+let state=fresh();
+try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
+let ui={sel:today(),week:monOf(today()),tab:"missions",sound:true};
+try{const u=JSON.parse(localStorage.getItem("ascend.ui")||"{}");if(u.tab)ui.tab=u.tab;if(u.sound===false)ui.sound=false}catch(e){}
+const saveUi=()=>{try{localStorage.setItem("ascend.ui",JSON.stringify({tab:ui.tab,sound:ui.sound}))}catch(e){}};
+
+/* ---------- sync ---------- */
+let dbDoc=null,saving=false,dirty=false,saveT=0;
+const SYNC={wait:"Connecting",ok:"Synced across devices",saving:"Saving",local:"Saved on this device only",stale:"Can't reach sync, may be out of date"};
+function setSync(s){const el=$("sync");el.dataset.s=s;el.textContent=SYNC[s]}
+function persist(){state.updatedAt=Date.now();try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}pushRemote()}
+function pushRemote(){if(!dbDoc)return;dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,700)}
+async function flush(retry){if(saving||!dirty||!dbDoc)return;saving=true;dirty=false;setSync("saving");
+  try{await dbDoc.set(JSON.parse(JSON.stringify(state)));setSync("ok")}
+  catch(e){const c=e&&e.code;
+    if(c==="unavailable"&&!retry){saving=false;dirty=true;setTimeout(()=>flush(true),1500+Math.random()*1500);return}
+    if(c==="quota_exceeded"){toast("Sync storage is full. Progress is still saved on this device.",true);setSync("local")}
+    else if(c==="unavailable"||c==="resource_exhausted"){setSync("stale");dirty=true}
+    else{dbDoc=null;setSync("local")}}
+  saving=false;if(dirty&&dbDoc&&$("sync").dataset.s!=="stale")flush()}
+async function initSync(){
+  if(!window.claude||!window.claude.use)return setSync("local");
+  let db,user;try{[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")])}catch(e){}
+  if(!db||!user)return setSync("local");
+  const id=await user.id();if(!id)return setSync("local");
+  dbDoc=db.doc("data/users/"+id+"/state");
+  const timer=setTimeout(()=>setSync("stale"),10000);
+  dbDoc.onSnapshot(snap=>{
+    const m=snap.metadata;if(m.hasPendingWrites)return;
+    if(!m.fromCache)clearTimeout(timer);
+    if(snap.exists){const r=snap.data();
+      if((r.updatedAt||0)>(state.updatedAt||0)){state=normalize(JSON.parse(JSON.stringify(r)));try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}render()}
+      else if(!m.fromCache&&(r.updatedAt||0)<(state.updatedAt||0))pushRemote();
+    }else if(!m.fromCache&&state.updatedAt)pushRemote();
+    if(!m.fromCache&&!dirty&&!saving)setSync("ok");
+  },()=>{clearTimeout(timer);dbDoc=null;setSync("local")});
+}
+
+/* ---------- game logic ---------- */
+function levelOf(xp,base=100,step=40){let l=1,need=base;while(xp>=need){xp-=need;l++;need=base+(l-1)*step}return{level:l,into:xp,need}}
+const rankOf=l=>RANKS[Math.min(RANKS.length-1,Math.floor((l-1)/5))];
+function tasksFor(d){const w=dow(d);return Object.values(state.tasks).filter(t=>t.date?t.date===d:(t.days||[]).includes(w)&&d>=t.from&&(!t.until||d<t.until)).sort((a,b)=>a.created-b.created)}
+const doneOn=d=>state.done[d]||{};
+const hasDone=d=>Object.keys(doneOn(d)).length>0;
+function streakBefore(d){let n=0,c=addD(d,-1);while(hasDone(c)){n++;c=addD(c,-1)}return n}
+function streakNow(){const t=today();return streakBefore(t)+(hasDone(t)?1:0)}
+const multFor=d=>1+Math.min(streakBefore(d),10)*0.05;
+const dayXp=d=>Object.values(doneOn(d)).reduce((a,v)=>a+v[0],0);
+const weekDmg=w=>{let s=0;for(let i=0;i<7;i++)s+=dayXp(addD(w,i));return s};
+function nextItem(kind){return CAT[kind].find(i=>!state.owned[kind].includes(i.id))}
+function prune(){const cut=addD(today(),-200);for(const k of Object.keys(state.done))if(k<cut)delete state.done[k];
+  for(const t of Object.values(state.tasks))if((t.date&&t.date<cut)||(t.until&&t.until<cut))delete state.tasks[t.id];
+  for(const k of Object.keys(state.boss))if(k<cut)delete state.boss[k]}
+
+function toggle(id,btn){
+  const d=ui.sel,t=state.tasks[id];if(!t)return;
+  if(d>today()){toast("You can plan this day, but you can only clear missions for today or earlier.",true);return}
+  const before=levelOf(state.xp).level;
+  if(!state.done[d])state.done[d]={};
+  const rec=state.done[d][id];
+  if(rec){state.xp=Math.max(0,state.xp-rec[0]);state.credits-=rec[1];state.area[t.area]=Math.max(0,state.area[t.area]-rec[0]);delete state.done[d][id];if(!Object.keys(state.done[d]).length)delete state.done[d];beep("undo")}
+  else{const xp=Math.round(DIFF[t.diff].xp*multFor(d));state.done[d][id]=[xp,xp];state.xp+=xp;state.credits+=xp;state.area[t.area]+=xp;
+    burst(btn,getComputedStyle(btn.closest(".task")).getPropertyValue("--ac").trim());beep("ok");toast(`+${xp} XP · +${xp} credits`)}
+  persist();render();
+  const after=levelOf(state.xp).level;if(after>before)levelUp(after);
+}
+function addTask(title,area,diff,rep){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const t={id,title,area,diff,created:Date.now()};
+  if(rep==="once")t.date=ui.sel;else{t.days=rep==="daily"?[0,1,2,3,4,5,6]:[dow(ui.sel)];t.from=ui.sel}
+  state.tasks[id]=t;persist();render()}
+function removeTask(id){const t=state.tasks[id];if(!t)return;
+  if(t.date||t.from>=ui.sel)delete state.tasks[id];else t.until=ui.sel; // recurring: stop from the selected day on, keep history
+  persist();render();toast(t.date?"Mission removed":"Repeating mission stopped from this day on")}
+
+/* ---------- render ---------- */
+function render(){renderHud();renderHold();renderWeek();renderDay();renderBoss();renderAttr();renderShop();
+  $("vMissions").hidden=ui.tab!=="missions";$("vShowroom").hidden=ui.tab!=="showroom";
+  $("tabM").setAttribute("aria-selected",ui.tab==="missions");$("tabS").setAttribute("aria-selected",ui.tab==="showroom");
+  $("sndUse").setAttribute("href",ui.sound?"#i-snd":"#i-mute")}
+function renderHud(){const L=levelOf(state.xp);$("hLevel").textContent=L.level;$("hRank").textContent=rankOf(L.level);
+  $("hXp").textContent=`${fmtN(L.into)} / ${fmtN(L.need)} XP`;$("hBar").style.width=(L.into/L.need*100).toFixed(1)+"%";
+  $("hCr").textContent=fmtN(state.credits);$("sCr").classList.toggle("neg",state.credits<0);
+  const s=streakNow();$("hSt").textContent=s;$("hMult").textContent=`+${Math.round((multFor(today())-1)*100)}% XP`}
+function renderHold(){$("hold").innerHTML=["house","car"].map(kind=>{
+  const cur=CAT[kind].find(i=>i.id===state.active[kind])||CAT[kind][0],nx=nextItem(kind);
+  const pct=nx?Math.max(0,Math.min(100,state.credits/nx.price*100)):100;
+  return `<button type="button" class="asset" data-go="showroom" style="background-image:url(${cur.img})"><div>
+    <span class="label">${kind==="house"?"Current base":"Current ride"}</span><h2>${esc(cur.name)}</h2>
+    <div class="next mono">${nx?`<span>Next: ${esc(nx.name)}</span><div class="bar"><i style="width:${pct.toFixed(0)}%"></i></div><span>${fmtN(Math.max(0,state.credits))}/${fmtN(nx.price)}</span>`:`<span>Every ${kind==="house"?"home":"car"} owned</span>`}</div>
+  </div></button>`}).join("")}
+function renderWeek(){const t=today(),w=ui.week;
+  $("weekLabel").textContent=w===monOf(t)?"This week":`Week of ${nice(w)}`;
+  $("week").innerHTML=DOW.map((n,i)=>{const d=addD(w,i),ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length,full=ts.length>0&&c===ts.length;
+    return `<button type="button" class="day${d===t?" today":""}${full?" full":""}" data-day="${d}" aria-pressed="${d===ui.sel}" aria-label="${DOWL[i]} ${nice(d)}, ${c} of ${ts.length} cleared">
+      <span class="dow">${n}</span><span class="num">${pd(d).getDate()}</span><div class="bar"><i style="width:${ts.length?c/ts.length*100:0}%"></i></div><span class="cnt mono">${c}/${ts.length}</span></button>`}).join("")}
+function renderDay(){const d=ui.sel,t=today(),ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length,future=d>t;
+  $("dayTitle").textContent=`${DOWL[dow(d)]}, ${nice(d)}`+(d===t?" · Today":"");
+  $("daySum").textContent=ts.length?`${c}/${ts.length} cleared · ${fmtN(dayXp(d))} XP earned`:"";
+  $("rWeekLbl").textContent="Every "+DOWL[dow(d)];
+  const m=multFor(d);
+  $("tasks").innerHTML=ts.length?ts.map(x=>{const r=dn[x.id],xp=r?r[0]:Math.round(DIFF[x.diff].xp*m);
+    return `<li class="task${r?" done":""}${future?" locked":""}" data-area="${x.area}">
+      <button type="button" class="chk" data-chk="${x.id}" aria-pressed="${!!r}" aria-label="${r?"Undo":"Clear"} ${esc(x.title)}">${ic("check")}</button>
+      <div class="t-main"><span class="t-title">${esc(x.title)}</span><span class="t-meta"><b>${AREAS[x.area]}</b><span>${DIFF[x.diff].label}</span>${x.days?`<span>${ic("rep")} ${x.days.length===7?"Daily":"Weekly"}</span>`:""}</span></div>
+      <span class="t-xp">${r?"+":""}${xp} XP</span>
+      <button type="button" class="del" data-del="${x.id}" aria-label="Remove ${esc(x.title)}">${ic("x")}</button></li>`}).join("")
+   :`<li class="empty"><span>No missions set for ${DOWL[dow(d)]}. Add your own below or start with one of these.</span><div class="sugg">${SUGG.map((s,i)=>`<button type="button" class="chipbtn" data-sugg="${i}">+ ${esc(s[0])}</button>`).join("")}</div></li>`}
+function renderBoss(){const w=ui.week,cur=monOf(today()),b=state.boss[w],el=$("boss"),dmg=weekDmg(w);
+  let h=`<div class="panel-h"><h3>Weekly boss</h3><span class="label">${w===cur?"This week":"Week of "+nice(w)}</span></div>`;
+  if(!b){h+=w===cur?`<form id="bossForm"><p>Name the one big thing you want beaten by Sunday. Every XP you earn this week is damage.</p>
+      <input type="text" id="bossName" maxlength="60" placeholder="e.g. Launch the landing page" aria-label="Boss name">
+      <fieldset class="seg"><legend class="label">Size</legend><div>${Object.entries(BOSS).map(([k,v],i)=>`<label style="--sc:var(--boss)"><input type="radio" name="tier" id="bt${k}" value="${k}"${i===1?" checked":""}><span>${v.label} · ${v.hp} HP · ${v.loot} loot</span></label>`).join("")}</div></fieldset>
+      <button class="go" type="submit" style="background:var(--boss)">Summon boss</button></form>`
+    :`<p>${w>cur?"You can summon this week's boss once the week starts.":"No boss was summoned this week."}</p>`}
+  else{const T=BOSS[b.tier],hp=Math.max(0,T.hp-dmg),dead=hp<=0,over=w<cur;
+    h+=`<p class="boss-name">${esc(b.name)}</p><div class="bar"><i style="width:${hp/T.hp*100}%"></i></div>
+      <div class="boss-row mono"><span>${fmtN(hp)} / ${T.hp} HP</span><span>${T.label} · loot ${T.loot}</span></div>
+      <div style="margin-top:12px">${b.claimed?`<p style="color:var(--ok);margin:0">Defeated. Loot claimed: +${T.loot} credits, +${T.loot/2} XP.</p>`
+        :dead?`<button class="go gold" type="button" id="claimBtn" style="width:100%">Claim ${T.loot} credits</button>`
+        :over?`<p style="margin:0">Escaped with ${fmtN(hp)} HP left.</p>`:`<p style="margin:0">${fmtN(hp)} more XP this week brings it down.</p>`}</div>`}
+  el.innerHTML=h}
+function renderAttr(){$("attr").innerHTML=Object.keys(AREAS).map(a=>{const L=levelOf(state.area[a],60,20);
+  return `<div class="attr-i" style="--ac:var(--${a})"><div><b>${AREAS[a]} · Lv ${L.level}</b><span class="mono">${fmtN(L.into)} / ${L.need}</span></div><div class="bar"><i style="width:${L.into/L.need*100}%"></i></div></div>`}).join("")}
+function renderShop(){const lv=levelOf(state.xp).level;
+  for(const[kind,host]of[["house","gHouse"],["car","gCar"]]){const own=state.owned[kind];
+    $(kind==="house"?"homeCount":"carCount").textContent=`${own.length} of ${CAT[kind].length} owned`;
+    $(host).innerHTML=CAT[kind].map(it=>{const o=own.includes(it.id),cur=state.active[kind]===it.id,lock=!o&&lv<it.lvl,can=state.credits>=it.price;
+      return `<button type="button" class="card${lock?" lock":""}" data-item="${it.id}">
+        <div class="ph" style="background-image:url(${it.img})"></div><span class="tier">T${it.tier}</span>
+        ${cur?`<span class="badge cur">Current</span>`:o?`<span class="badge">Owned</span>`:""}
+        ${lock?`<div class="lk"><span>${ic("lock")} Level ${it.lvl}</span></div>`:""}
+        <div class="cb"><h4>${esc(it.name)}</h4><p>${esc(it.tag)}</p>${o?"":`<span class="price${can&&!lock?"":" cant"}">${ic("coin")} ${fmtN(it.price)}</span>`}</div></button>`}).join("")}}
+
+/* ---------- modals ---------- */
+function closeModal(){$("modalHost").innerHTML=""}
+function openItem(id){const kind=id[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===id);if(!it)return;
+  const o=state.owned[kind].includes(id),cur=state.active[kind]===id,lv=levelOf(state.xp).level,lock=lv<it.lvl,short=it.price-state.credits;
+  let act,msg=it.tag;
+  if(cur){act=`<button class="go ghost" type="button" data-close>Close</button>`;msg+=` This is your current ${kind==="house"?"base":"ride"}.`}
+  else if(o)act=`<button class="go" type="button" data-use="${id}">Set as current</button><button class="go ghost" type="button" data-close>Close</button>`;
+  else if(lock){act=`<button class="go" type="button" disabled>Locked</button><button class="go ghost" type="button" data-close>Close</button>`;msg+=` Unlocks at level ${it.lvl}. You are level ${lv}.`}
+  else if(short>0){act=`<button class="go" type="button" disabled>${fmtN(short)} credits short</button><button class="go ghost" type="button" data-close>Close</button>`}
+  else act=`<button class="go gold" type="button" data-buy="${id}">Buy for ${fmtN(it.price)} credits</button><button class="go ghost" type="button" data-close>Not yet</button>`;
+  $("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.name)}"><img src="${it.img}" alt="${esc(it.name)}">
+    <div class="sb"><span class="label">${kind==="house"?"Home":"Car"} · Tier ${it.tier}</span><h3>${esc(it.name)}</h3><p>${esc(msg)}</p>${o?"":`<span class="price">${ic("coin")} ${fmtN(it.price)} credits</span>`}<div class="acts">${act}</div></div></div></div>`}
+function confirmReset(){$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true"><div class="sb"><h3>Reset all progress?</h3><p>This erases your level, credits, missions, homes and cars on every synced device. It can't be undone.</p><div class="acts"><button class="go" type="button" style="background:var(--bad)" data-reset>Erase everything</button><button class="go ghost" type="button" data-close>Keep my progress</button></div></div></div></div>`}
+function levelUp(l){beep("level");const el=document.createElement("div");el.className="levelup";el.innerHTML=`<div><small>LEVEL UP</small><b>${l}</b><span>${rankOf(l)}</span></div>`;
+  document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,2400);burst(null,"#58e1ff",90)}
+function toast(msg,bad){const el=document.createElement("div");el.className="toast"+(bad?" bad":"");el.textContent=msg;$("toasts").appendChild(el);setTimeout(()=>el.remove(),bad?3600:1800)}
+
+/* ---------- fx ---------- */
+let actx=null;
+function beep(kind){if(!ui.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const seq={ok:[[660,0],[990,.07]],undo:[[330,0]],level:[[523,0],[659,.1],[784,.2],[1047,.3]],buy:[[392,0],[523,.09],[784,.18]]}[kind]||[];
+  for(const[f,at]of seq){const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+at;o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.25)}}catch(e){}}
+const fx=$("fx"),fctx=fx.getContext("2d");let parts=[],raf=0;
+const still=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function burst(el,color,n=26){if(still)return;const r=el?el.getBoundingClientRect():{left:innerWidth/2,top:innerHeight/2,width:0,height:0};
+  const x=r.left+r.width/2,y=r.top+r.height/2;
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,s=2+Math.random()*(el?5:11);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,l:1,c:color||"#58e1ff",z:2+Math.random()*3})}
+  if(!raf)raf=requestAnimationFrame(tick)}
+function tick(){const d=window.devicePixelRatio||1;if(fx.width!==innerWidth*d){fx.width=innerWidth*d;fx.height=innerHeight*d}
+  fctx.setTransform(d,0,0,d,0,0);fctx.clearRect(0,0,innerWidth,innerHeight);
+  parts=parts.filter(p=>p.l>0);for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.l-=.022;fctx.globalAlpha=Math.max(0,p.l);fctx.fillStyle=p.c;fctx.fillRect(p.x,p.y,p.z,p.z)}
+  fctx.globalAlpha=1;raf=parts.length?requestAnimationFrame(tick):0}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{const t=e.target.closest("button,[data-close]");if(!t)return;const d=t.dataset;
+  if(d.tab){ui.tab=d.tab;saveUi();render()}
+  else if(d.go){ui.tab=d.go;saveUi();render();window.scrollTo({top:0})}
+  else if(d.day){ui.sel=d.day;render()}
+  else if(d.chk)toggle(d.chk,t);
+  else if(d.del)removeTask(d.del);
+  else if(d.sugg){const s=SUGG[+d.sugg];addTask(s[0],s[1],s[2],"once")}
+  else if(d.item)openItem(d.item);
+  else if(d.buy){const kind=d.buy[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===d.buy);
+    if(it&&state.credits>=it.price&&levelOf(state.xp).level>=it.lvl&&!state.owned[kind].includes(it.id)){state.credits-=it.price;state.owned[kind].push(it.id);state.active[kind]=it.id;persist();closeModal();render();beep("buy");burst(null,"#ffc24a",110);toast(`${it.name} is yours`)}}
+  else if(d.use){const kind=d.use[0]==="h"?"house":"car";if(state.owned[kind].includes(d.use)){state.active[kind]=d.use;persist();closeModal();render()}}
+  else if("reset" in d){state=fresh();persist();closeModal();render();toast("Progress reset")}
+  else if("close" in d){if(e.target===t||t.tagName==="BUTTON")closeModal()}
+  else if(t.id==="wkPrev"||t.id==="wkNext"){ui.week=addD(ui.week,t.id==="wkPrev"?-7:7);ui.sel=addD(ui.week,dow(ui.sel));render()}
+  else if(t.id==="wkNow"){ui.sel=today();ui.week=monOf(ui.sel);render()}
+  else if(t.id==="sndBtn"){ui.sound=!ui.sound;saveUi();render();if(ui.sound)beep("ok")}
+  else if(t.id==="resetBtn")confirmReset();
+  else if(t.id==="claimBtn"){const b=state.boss[ui.week];if(b&&!b.claimed&&weekDmg(ui.week)>=BOSS[b.tier].hp){const T=BOSS[b.tier],before=levelOf(state.xp).level;b.claimed=true;state.credits+=T.loot;state.xp+=T.loot/2;persist();render();beep("buy");burst(t,"#ff4f8b",80);toast(`Boss defeated: +${T.loot} credits, +${T.loot/2} XP`);const a=levelOf(state.xp).level;if(a>before)levelUp(a)}}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
+  if(f.id==="addForm"){const title=$("taskTitle").value.trim();if(!title){$("taskTitle").focus();return}
+    addTask(title,f.area.value,f.diff.value,f.rep.value);$("taskTitle").value="";$("rOnce").checked=true;$("taskTitle").focus()}
+  else if(f.id==="bossForm"){const name=$("bossName").value.trim();if(!name){$("bossName").focus();return}
+    state.boss[ui.week]={name,tier:f.tier.value,claimed:false};persist();render();toast("Boss summoned")}
+});
+// roll the day over if the page stays open past midnight
+let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;render()}},60000);
+
+prune();render();initSync();
+})();
+</script>
