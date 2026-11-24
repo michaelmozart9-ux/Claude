@@ -1,4 +1,4 @@
-<title>Ascend Protocol</title>
+<title>December Lock In</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -53,6 +53,52 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 .sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
 .sync[data-s=ok]::before{background:var(--ok);box-shadow:0 0 8px var(--ok)} .sync[data-s=saving]::before{background:var(--credit)} .sync[data-s=stale]::before{background:var(--bad)}
 
+/* brand */
+.brandbar{border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(255,194,74,.10),transparent 60%)}
+.brandbar .wrap{display:flex;align-items:center;gap:6px 16px;padding-block:7px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:13px;display:flex;align-items:center;gap:8px;color:var(--credit)}
+.brand-goal{font-size:12px;color:var(--ink-2)}
+.cd{margin-left:auto;font-size:12px;color:var(--ink)}
+.cd b{color:var(--credit);font-weight:500}
+/* goal */
+.goal{margin-top:18px;border-color:#5a4720;background:linear-gradient(135deg,rgba(255,194,74,.09),transparent 45%),var(--panel)}
+.goal-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px}
+.goal-main{display:grid;gap:14px;align-content:start;min-width:0}
+.goal h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(26px,4.4vw,40px);letter-spacing:.02em;line-height:1.05;text-transform:uppercase;text-wrap:balance}
+.goal h2 span{color:var(--credit)}
+.eur{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.eur b{font-family:var(--f-display);font-weight:700;font-size:clamp(46px,8vw,72px);line-height:.9;color:var(--credit);font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(255,194,74,.35)}
+.eur span{color:var(--ink-2);font-size:14px}
+.gbar{position:relative;height:16px;background:#0a1120;border:1px solid #5a4720;margin-bottom:22px}
+.gbar>i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#7a5a17,var(--credit));box-shadow:0 0 16px rgba(255,194,74,.5);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.tick{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--void)}
+.tick span{position:absolute;top:19px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap}
+.tick.hit span{color:var(--credit)}
+.tick:last-child span{left:auto;right:0;transform:none}
+.goal-act{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.goal-act p{margin:0;font-size:12.5px;color:var(--ink-2);flex:1 1 200px}
+.inc{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.inc li{display:flex;gap:10px;align-items:center;font-size:13px;padding:7px 10px;background:var(--hull);border:1px solid var(--line);min-width:0}
+.inc b{font-family:var(--f-mono);font-weight:500;color:var(--credit);white-space:nowrap}
+.inc .fl{flex:1;min-width:0;overflow-wrap:anywhere;color:var(--ink-2)}
+.inc .ft{color:var(--ink-3);font-size:11px;white-space:nowrap}
+.inc .empty-i{color:var(--ink-3);border-style:dashed}
+.cal{display:grid;gap:5px;align-content:start}
+.cal-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.cal-h b{font-family:var(--f-display);letter-spacing:.12em;text-transform:uppercase;font-size:13px}
+.cal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-g .dw{font-family:var(--f-display);font-size:10px;letter-spacing:.1em;color:var(--ink-3);text-align:center}
+.cd-day{aspect-ratio:1;max-width:100%;border:1px solid var(--line);background:var(--hull);font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);position:relative;display:grid;place-items:center}
+.cd-day:hover{border-color:var(--line-hi)}
+.cd-day.part{background:color-mix(in srgb,var(--ion) 18%,var(--hull));color:var(--ink)}
+.cd-day.full{background:color-mix(in srgb,var(--ok) 38%,var(--hull));color:var(--ink);border-color:color-mix(in srgb,var(--ok) 60%,var(--line))}
+.cd-day.miss{background:color-mix(in srgb,var(--bad) 16%,var(--hull));color:var(--ink-2)}
+.cd-day.today{border-color:var(--ion);color:var(--ion);box-shadow:inset 0 0 0 1px var(--ion)}
+.cd-day[aria-pressed=true]{outline:2px solid var(--ink);outline-offset:1px}
+.cd-day.cash::after{content:"€";position:absolute;top:1px;right:3px;font-size:9px;color:var(--credit);font-weight:500}
+.legend{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:11px;color:var(--ink-3)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+@media (max-width:820px){.goal-grid{grid-template-columns:minmax(0,1fr)}}
 /* tabs */
 .tabs{display:flex;gap:4px;margin-top:18px;border-bottom:1px solid var(--line)}
 .tab{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:13px;padding:10px 16px;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -61,6 +107,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 
 /* holdings */
 .hold{margin-top:18px;position:relative}
+.mkt{margin-top:18px}
 .hold-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .stage-hint{display:none}
 .hold.gl #stage{display:block;width:100%;height:clamp(250px,36vw,430px);clip-path:var(--cut);background:radial-gradient(ellipse at 50% 88%,#1a3852 0%,#0b1424 55%,#060a13 100%);touch-action:pan-y;cursor:grab}
@@ -230,6 +277,7 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
 
 @media (max-width:900px){.deck{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:620px){
+  .brand-goal{display:none}
   .hold-cards{grid-template-columns:1fr}.asset{aspect-ratio:16/7}
   .stat{min-width:0;flex:1;padding:5px 9px}.stat .v{font-size:16px}
   .hud .wrap{gap:10px}.sync{display:none}
@@ -252,7 +300,9 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
   <symbol id="i-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
 </svg>
 
-<header class="hud"><div class="wrap">
+<header class="hud"><div class="brandbar"><div class="wrap">
+  <span class="brand"><svg class="i"><use href="#i-lock"/></svg>December Lock In</span><span class="brand-goal">Mission: first €100 online</span><span class="cd mono" id="cd"></span>
+</div></div><div class="wrap">
   <div class="lvl">
     <div class="hex"><b id="hLevel">1</b></div>
     <div class="lvl-info">
@@ -275,20 +325,22 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
   </nav>
 
   <section id="vMissions">
-    <div class="hold" id="hold"><canvas id="stage" hidden aria-label="3D view of your current home and car. Drag to rotate."></canvas><span class="label stage-hint">Your property · drag to rotate</span><div class="hold-cards" id="holdCards"></div></div>
-    <div class="panel mkt">
-      <div class="mkt-top">
-        <div class="mkt-q"><span class="label">Your stock · <b>YOU</b></span><div class="mkt-p" id="mkP">100.00</div><div class="mkt-d mono" id="mkD"></div></div>
-        <div class="mkt-kv"><span class="label">All-time high</span><b class="mono" id="mkA">100.00</b></div>
-        <div class="mkt-kv"><span class="label">Last move</span><b id="mkL">Listed</b></div>
-        <div class="mkt-act">
-          <div class="rng" id="mkR"><button class="chipbtn" type="button" data-rng="1W">1W</button><button class="chipbtn" type="button" data-rng="1M">1M</button><button class="chipbtn" type="button" data-rng="ALL">All</button></div>
-          <button class="go warn" type="button" id="admitBtn">Admit a slip</button>
+    <section class="panel goal" id="goal" aria-label="First 100 euro goal">
+      <div class="goal-grid">
+        <div class="goal-main">
+          <div><span class="label" style="color:var(--credit)">Main objective</span><h2>Make your first <span>€100</span> online</h2></div>
+          <div class="eur"><b id="gEur">€0</b><span id="gSub">of €100 · no income logged yet</span></div>
+          <div class="gbar" id="gBar"><i style="width:0%"></i></div>
+          <div class="goal-act"><button class="go gold" type="button" id="incBtn">Log income</button><p id="gNext">Every euro pays 5 XP. Hitting €1, €10, €25, €50 and €100 pays big bonuses.</p></div>
+          <ul class="inc" id="incList"></ul>
+        </div>
+        <div class="cal">
+          <div class="cal-h"><b id="calTitle">December</b><span class="mono" id="calSum" style="font-size:12px;color:var(--ink-2)"></span></div>
+          <div class="cal-g" id="cal"></div>
+          <div class="legend"><span><i style="background:color-mix(in srgb,var(--ok) 38%,var(--hull))"></i>All cleared</span><span><i style="background:color-mix(in srgb,var(--ion) 18%,var(--hull))"></i>Partial</span><span><i style="background:color-mix(in srgb,var(--bad) 16%,var(--hull))"></i>Missed</span><span><b style="color:var(--credit);font-weight:500;margin-right:4px">€</b>Earned money</span></div>
         </div>
       </div>
-      <div class="chart" id="chart" role="img" aria-label="Your stock price over time"></div>
-      <ul class="feed" id="feed"></ul>
-    </div>
+    </section>
     <div class="deck">
       <div class="panel">
         <div class="panel-h">
@@ -304,13 +356,13 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
         <ul class="tasks" id="tasks"></ul>
         <form class="add" id="addForm" autocomplete="off">
           <div class="add-row">
-            <input type="text" id="taskTitle" maxlength="90" placeholder="New mission, e.g. 45 min workout" aria-label="Mission name">
+            <input type="text" id="taskTitle" maxlength="90" placeholder="New mission, e.g. Send 10 outreach messages" aria-label="Mission name">
             <button class="go" type="submit" id="addBtn">Add</button>
           </div>
           <div class="opts">
             <fieldset class="seg"><legend class="label">Area</legend><div>
               <label style="--sc:var(--body)"><input type="radio" name="area" id="aBody" value="body" checked><span>Body</span></label>
-              <label style="--sc:var(--wealth)"><input type="radio" name="area" id="aWealth" value="wealth"><span>Wealth</span></label>
+              <label style="--sc:var(--wealth)"><input type="radio" name="area" id="aWealth" value="wealth"><span>Money</span></label>
               <label style="--sc:var(--mind)"><input type="radio" name="area" id="aMind" value="mind"><span>Mind</span></label>
             </div></fieldset>
             <fieldset class="seg"><legend class="label">Difficulty</legend><div>
@@ -337,6 +389,8 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
         <div class="panel">
           <div class="panel-h"><h3>Rules</h3></div>
           <ul class="rules">
+            <li>The lock-in runs December 1 to 31. One goal: your first €100 earned online.</li>
+            <li>Log real income only. Each euro pays 5 XP and 5 credits; €1, €10, €25, €50 and €100 pay bonuses and move your stock.</li>
             <li>Clearing a mission pays XP and the same number of credits.</li>
             <li>XP raises your level. It only drops when you admit a slip. Credits buy homes and cars.</li>
             <li>Your stock rises 1% per 25 XP, jumps on milestones (perfect day, streaks, level up, boss, purchases) and falls up to 6% for a day with missed missions.</li>
@@ -347,6 +401,20 @@ svg.i{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:
         </div>
       </aside>
     </div>
+    <div class="panel mkt">
+      <div class="mkt-top">
+        <div class="mkt-q"><span class="label">Lock-in stock · <b>$LOCK</b></span><div class="mkt-p" id="mkP">100.00</div><div class="mkt-d mono" id="mkD"></div></div>
+        <div class="mkt-kv"><span class="label">All-time high</span><b class="mono" id="mkA">100.00</b></div>
+        <div class="mkt-kv"><span class="label">Last move</span><b id="mkL">Listed</b></div>
+        <div class="mkt-act">
+          <div class="rng" id="mkR"><button class="chipbtn" type="button" data-rng="1W">1W</button><button class="chipbtn" type="button" data-rng="1M">1M</button><button class="chipbtn" type="button" data-rng="ALL">All</button></div>
+          <button class="go warn" type="button" id="admitBtn">Admit a slip</button>
+        </div>
+      </div>
+      <div class="chart" id="chart" role="img" aria-label="Your stock price over time"></div>
+      <ul class="feed" id="feed"></ul>
+    </div>
+    <div class="hold" id="hold"><canvas id="stage" hidden aria-label="3D view of your current home and car. Drag to rotate."></canvas><span class="label stage-hint">Your property · drag to rotate</span><div class="hold-cards" id="holdCards"></div></div>
   </section>
 
   <section id="vShowroom" hidden>
@@ -520,7 +588,7 @@ const fmtN=n=>Math.round(n).toLocaleString("en-US");
 
 /* ---------- catalog ---------- */
 const DIFF={easy:{xp:10,label:"Easy"},medium:{xp:25,label:"Medium"},hard:{xp:50,label:"Hard"},epic:{xp:100,label:"Epic"}};
-const AREAS={body:"Body",wealth:"Wealth",mind:"Mind"};
+const AREAS={body:"Body",wealth:"Money",mind:"Mind"};
 const RANKS=["Recruit","Operator","Specialist","Vanguard","Elite","Commander","Legend"];
 const LVL_REQ=[1,2,4,6,9,12,16,20,25];
 const mk=(k,prices,rows)=>rows.map((r,i)=>({id:k+i,kind:k==="h"?"house":"car",name:r[0],tag:r[1],price:prices[i],lvl:LVL_REQ[i],img:`img/${k}${i+1}.jpg`,tier:i+1}));
@@ -534,7 +602,7 @@ const CARS=mk("c",[0,200,500,1100,2200,4000,6500,10000,16000],[
  ["Mid-Engine Supercar","Carbon tub, 700 horsepower."],["V12 Hybrid Hypercar","Fewer than 500 built."],["Sixteen-Cylinder Flagship","The last word in fast."]]);
 const CAT={house:HOUSES,car:CARS};
 const BOSS={minion:{hp:300,loot:100,label:"Minion"},brute:{hp:600,loot:250,label:"Brute"},titan:{hp:1000,loot:500,label:"Titan"}};
-const SUGG=[["45 min workout","body","hard"],["One hour of focused work on my business","wealth","hard"],["10 min of planning tomorrow","mind","easy"]];
+const SUGG=[["Send 10 outreach messages","wealth","hard"],["Post one piece of content","wealth","medium"],["Put one offer or listing live","wealth","epic"],["45 min workout","body","hard"]];
 
 /* ---------- dates ---------- */
 const pad=n=>String(n).padStart(2,"0");
@@ -555,6 +623,7 @@ function normalize(s){const f=fresh();s=Object.assign(f,s||{});s.area=Object.ass
   s.owned={house:(s.owned&&s.owned.house)||["h0"],car:(s.owned&&s.owned.car)||["c0"]};s.active=Object.assign({house:"h0",car:"c0"},s.active);
   s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};
   if(!s.stock||!Array.isArray(s.stock.hist)||!s.stock.hist.length)s.stock={p:100,ath:100,hist:[[Date.now(),100,"ipo","Listed at 100.00"]],next:today(),perfect:{},ms:{}};
+  s.money=s.money||{e:[],hit:{}};s.money.e=s.money.e||[];s.money.hit=s.money.hit||{};
   s.stock.perfect=s.stock.perfect||{};s.stock.ms=s.stock.ms||{};s.stock.next=s.stock.next||today();return s}
 let state=normalize(fresh());
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
@@ -626,6 +695,25 @@ function milestones(d){const s=state.stock,ts=tasksFor(d),dn=doneOn(d);
 function admit(n,note){const before=levelOf(state.xp).level,lost=Math.min(n,state.xp),pct=crashPct(n);state.xp-=lost;
   move(-pct,"crash",`Admitted: ${note||"a slip"} (-${lost} XP)`);persist();closeModal();render();beep("crash");burst(null,"#ff5d6c",100);
   const after=levelOf(state.xp).level;toast(`-${lost} XP · stock -${pct}%`+(after<before?` · back to level ${after}`:""),true)}
+/* ---------- €100 goal ---------- */
+const GOAL=10000; // cents
+const MILES=[[100,"First euro made online",100,20],[1000,"€10 made online",50,8],[2500,"€25 made online",100,10],[5000,"Halfway: €50 made online",150,15],[10000,"€100 made online",300,30]];
+const eur=c=>"€"+(c%100?(c/100).toFixed(2):String(c/100));
+const earned=()=>state.money.e.reduce((a,e)=>a+e[1],0);
+function lockYear(){const n=new Date();return n.getMonth()===0?n.getFullYear()-1:n.getFullYear()}
+const decStart=()=>lockYear()+"-12-01",decEnd=()=>lockYear()+"-12-31";
+function addIncome(cents,note){const before=levelOf(state.xp).level,xp=Math.round(cents/100*5),t0=earned();
+  state.money.e.push([Date.now().toString(36),cents,note,Date.now(),xp]);state.xp+=xp;state.credits+=xp;state.area.wealth+=xp;
+  move(Math.min(25,cents/200+2),"up",`Earned ${eur(cents)}`+(note?`: ${note}`:""));
+  const t1=t0+cents;let big=false;
+  for(const[c,label,bx,pct]of MILES)if(t1>=c&&!state.money.hit[c]){state.money.hit[c]=1;state.xp+=bx;state.credits+=bx;move(pct,"mile",label);if(c===GOAL)big=true}
+  const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
+  persist();closeModal();render();beep("buy");burst(null,"#ffc24a",120);toast(`+${eur(cents)} logged · +${xp} XP`);
+  if(big)celebrate();else if(after>before)levelUp(after)}
+function removeIncome(id){const i=state.money.e.findIndex(e=>e[0]===id);if(i<0)return;const e=state.money.e[i];
+  state.money.e.splice(i,1);state.xp=Math.max(0,state.xp-e[4]);state.credits-=e[4];state.area.wealth=Math.max(0,state.area.wealth-e[4]);
+  const t=earned();for(const[c,,bx]of MILES)if(t<c&&state.money.hit[c]){delete state.money.hit[c];state.xp=Math.max(0,state.xp-bx);state.credits-=bx}
+  move(-Math.min(25,e[1]/200+2),"undo",`Removed income entry (${eur(e[1])})`);persist();closeModal();render();toast("Income entry removed")}
 function toggle(id,btn){
   const d=ui.sel,t=state.tasks[id];if(!t)return;
   if(d>today()){toast("You can plan this day, but you can only clear missions for today or earlier.",true);return}
@@ -647,10 +735,42 @@ function removeTask(id){const t=state.tasks[id];if(!t)return;
   persist();render();toast(t.date?"Mission removed":"Repeating mission stopped from this day on")}
 
 /* ---------- render ---------- */
-function render(){renderHud();renderHold();renderMarket();renderWeek();renderDay();renderBoss();renderAttr();renderShop();
+function render(){renderBrand();renderGoal();renderHud();renderHold();renderMarket();renderWeek();renderDay();renderBoss();renderAttr();renderShop();
   $("vMissions").hidden=ui.tab!=="missions";$("vShowroom").hidden=ui.tab!=="showroom";
   $("tabM").setAttribute("aria-selected",ui.tab==="missions");$("tabS").setAttribute("aria-selected",ui.tab==="showroom");
   $("sndUse").setAttribute("href",ui.sound?"#i-snd":"#i-mute")}
+function renderBrand(){const t=today(),a=decStart(),z=decEnd(),el=$("cd");
+  if(t<a){const n=Math.round((pd(a)-pd(t))/864e5);el.innerHTML=`Lock-in starts in <b>${n} day${n===1?"":"s"}</b>`}
+  else if(t<=z){const n=pd(t).getDate(),left=31-n;el.innerHTML=`Day <b>${n}</b> of 31 · ${left?`<b>${left}</b> day${left===1?"":"s"} left`:"<b>final day</b>"}`}
+  else el.innerHTML=`Lock-in complete`}
+function renderGoal(){const c=earned(),pct=Math.min(100,c/GOAL*100),done=c>=GOAL,t=today();
+  $("gEur").textContent=eur(c);
+  $("gSub").textContent=done?`made online · goal complete`:c?`of €100 · ${eur(GOAL-c)} to go`:"of €100 · no income logged yet";
+  $("gBar").innerHTML=`<i style="width:${pct.toFixed(1)}%"></i>`+MILES.slice(0,-1).map(([v])=>`<span class="tick${c>=v?" hit":""}" style="left:${v/GOAL*100}%"><span>${eur(v)}</span></span>`).join("")+`<span class="tick${done?" hit":""}" style="left:calc(100% - 2px)"><span>€100</span></span>`;
+  const nx=MILES.find(m=>c<m[0]);
+  $("gNext").textContent=nx?`Next milestone: ${nx[1]} in ${eur(nx[0]-c)} · +${nx[2]} XP bonus.`:"You did it. Keep logging; every euro still pays 5 XP.";
+  const es=state.money.e.slice(-4).reverse();
+  $("incList").innerHTML=es.length?es.map(e=>{const d=new Date(e[3]);return `<li><b>+${eur(e[1])}</b><span class="fl">${esc(e[2]||"Income")}</span><span class="ft mono">${MON[d.getMonth()]} ${d.getDate()}</span><button type="button" class="del" data-rminc="${e[0]}" aria-label="Remove ${eur(e[1])} entry">${ic("x")}</button></li>`}).join("")
+    :`<li class="empty-i">Log a payment the moment it lands: a sale, a client, a tip. Real money only.</li>`;
+  // December calendar
+  const a=decStart(),cash={};for(const e of state.money.e)cash[ds(new Date(e[3]))]=1;
+  let h=DOW.map(d=>`<span class="dw">${d[0]}</span>`).join("")+`<span></span>`.repeat(dow(a));let full=0,past=0;
+  for(let i=0;i<31;i++){const d=addD(a,i),ts=tasksFor(d),dn=doneOn(d),k=ts.filter(x=>dn[x.id]).length,isP=d<t;
+    let cls=ts.length&&k===ts.length?"full":k?"part":isP&&d>=a?"miss":"";if(cls==="full")full++;if(d<=t)past++;
+    h+=`<button type="button" class="cd-day ${cls}${d===t?" today":""}${cash[d]?" cash":""}" data-day="${d}" aria-pressed="${d===ui.sel}" aria-label="December ${i+1}: ${ts.length?`${k} of ${ts.length} cleared`:"no missions"}${cash[d]?", money earned":""}">${i+1}</button>`}
+  $("cal").innerHTML=h;$("calTitle").textContent="December "+lockYear();
+  $("calSum").textContent=past?`${full} of ${past} days fully cleared`:"Plan ahead: click a day";}
+function celebrate(){beep("level");const el=document.createElement("div");el.className="levelup";el.style.background="radial-gradient(circle,rgba(255,194,74,.22),rgba(3,6,12,.96) 60%)";el.innerHTML=`<div><small style="color:var(--credit)">MISSION COMPLETE</small><b style="color:var(--credit);text-shadow:0 0 40px rgba(255,194,74,.8)">€100</b><span>Made online</span></div>`;
+  document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,4200);burst(null,"#ffc24a",160)}
+function openIncome(){closeModal();$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Log income"><form class="sb" id="incForm" autocomplete="off">
+  <span class="label" style="color:var(--credit)">Real money only</span><h3>Log income</h3>
+  <p>Add a payment you actually received online. It counts toward your €100.</p>
+  <label class="field"><span class="label">Amount in euros</span><input type="number" id="incAmt" min="0.01" max="100000" step="0.01" inputmode="decimal" placeholder="e.g. 15"></label>
+  <label class="field"><span class="label">Where it came from</span><input type="text" id="incNote" maxlength="60" placeholder="e.g. First logo client on Fiverr"></label>
+  <p id="incPrev" class="mono"></p>
+  <div class="acts"><button class="go gold" type="submit">Log it</button><button class="go ghost" type="button" data-close>Cancel</button></div></form></div></div>`;incPreview();setTimeout(()=>{const i=$("incAmt");if(i)i.focus()},50)}
+function incPreview(){const el=$("incPrev");if(!el)return;const c=Math.round((+$("incAmt").value||0)*100);if(c<1){el.textContent="Enter the amount you received.";return}
+  const t=earned(),hits=MILES.filter(m=>t<m[0]&&t+c>=m[0]);el.textContent=`${eur(t)} → ${eur(t+c)} · +${Math.round(c/100*5)} XP`+(hits.length?` · unlocks: ${hits.map(m=>m[1]).join(", ")}`:"")}
 function renderHud(){const L=levelOf(state.xp);$("hLevel").textContent=L.level;$("hRank").textContent=rankOf(L.level);
   $("hXp").textContent=`${fmtN(L.into)} / ${fmtN(L.need)} XP`;$("hBar").style.width=(L.into/L.need*100).toFixed(1)+"%";
   $("hCr").textContent=fmtN(state.credits);$("sCr").classList.toggle("neg",state.credits<0);
@@ -716,7 +836,7 @@ function renderDay(){const d=ui.sel,t=today(),ts=tasksFor(d),dn=doneOn(d),c=ts.f
 function renderBoss(){const w=ui.week,cur=monOf(today()),b=state.boss[w],el=$("boss"),dmg=weekDmg(w);
   let h=`<div class="panel-h"><h3>Weekly boss</h3><span class="label">${w===cur?"This week":"Week of "+nice(w)}</span></div>`;
   if(!b){h+=w===cur?`<form id="bossForm"><p>Name the one big thing you want beaten by Sunday. Every XP you earn this week is damage.</p>
-      <input type="text" id="bossName" maxlength="60" placeholder="e.g. Launch the landing page" aria-label="Boss name">
+      <input type="text" id="bossName" maxlength="60" placeholder="e.g. Land my first paying customer" aria-label="Boss name">
       <fieldset class="seg"><legend class="label">Size</legend><div>${Object.entries(BOSS).map(([k,v],i)=>`<label style="--sc:var(--boss)"><input type="radio" name="tier" id="bt${k}" value="${k}"${i===1?" checked":""}><span>${v.label} · ${v.hp} HP · ${v.loot} loot</span></label>`).join("")}</div></fieldset>
       <button class="go" type="submit" style="background:var(--boss)">Summon boss</button></form>`
     :`<p>${w>cur?"You can summon this week's boss once the week starts.":"No boss was summoned this week."}</p>`}
@@ -795,7 +915,7 @@ function tick(){const d=window.devicePixelRatio||1;if(fx.width!==innerWidth*d){f
 document.addEventListener("click",e=>{const t=e.target.closest("button,[data-close]");if(!t)return;const d=t.dataset;
   if(d.tab){ui.tab=d.tab;saveUi();render()}
   else if(d.go){ui.tab=d.go;saveUi();render();window.scrollTo({top:0})}
-  else if(d.day){ui.sel=d.day;render()}
+  else if(d.day){ui.sel=d.day;ui.week=monOf(d.day);render();if(t.classList.contains("cd-day")){const dk=document.querySelector(".deck");if(dk)dk.scrollIntoView({behavior:"smooth",block:"start"})}}
   else if(d.chk)toggle(d.chk,t);
   else if(d.del)removeTask(d.del);
   else if(d.sugg){const s=SUGG[+d.sugg];addTask(s[0],s[1],s[2],"once")}
@@ -806,6 +926,8 @@ document.addEventListener("click",e=>{const t=e.target.closest("button,[data-clo
   else if(d.rng){ui.range=d.rng;saveUi();renderMarket()}
   else if(d.slip){$("slipXp").value=d.slip;slipPreview()}
   else if(t.id==="admitBtn")openAdmit();
+  else if(t.id==="incBtn")openIncome();
+  else if(d.rminc)removeIncome(d.rminc);
   else if("vt" in d){const v=$("mView"),to=v.dataset.mode==="3d"?"photo":"3d";v.dataset.mode=to;t.textContent=to==="3d"?"Photo":"3D model"}
   else if("reset" in d){state=normalize(fresh());persist();closeModal();render();toast("Progress reset")}
   else if("close" in d){if(t.tagName==="BUTTON"||(e.target===t&&downT===t))closeModal()}
@@ -815,7 +937,7 @@ document.addEventListener("click",e=>{const t=e.target.closest("button,[data-clo
   else if(t.id==="resetBtn")confirmReset();
   else if(t.id==="claimBtn"){const b=state.boss[ui.week];if(b&&!b.claimed&&weekDmg(ui.week)>=BOSS[b.tier].hp){const T=BOSS[b.tier],before=levelOf(state.xp).level;b.claimed=true;state.credits+=T.loot;state.xp+=T.loot/2;move(12,"mile",`Boss defeated: ${b.name}`);if(levelOf(state.xp).level>before)move(8,"mile",`Reached level ${levelOf(state.xp).level}`);persist();render();beep("buy");burst(t,"#ff4f8b",80);toast(`Boss defeated: +${T.loot} credits, +${T.loot/2} XP`);const a=levelOf(state.xp).level;if(a>before)levelUp(a)}}
 });
-document.addEventListener("input",e=>{if(e.target.id==="slipXp")slipPreview()});
+document.addEventListener("input",e=>{if(e.target.id==="slipXp")slipPreview();if(e.target.id==="incAmt")incPreview()});
 for(const ev of["pointermove","pointerdown","pointerleave"])$("chart").addEventListener(ev,chartHover);
 let rzT=0;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(renderMarket,150)});
 let downT=null;document.addEventListener("pointerdown",e=>{downT=e.target},true);
@@ -823,6 +945,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
   if(f.id==="addForm"){const title=$("taskTitle").value.trim();if(!title){$("taskTitle").focus();return}
     addTask(title,f.area.value,f.diff.value,f.rep.value);$("taskTitle").value="";$("rOnce").checked=true;$("taskTitle").focus()}
+  else if(f.id==="incForm"){const c=Math.round((+$("incAmt").value||0)*100);if(c<1||c>1e7){$("incAmt").focus();return}addIncome(c,$("incNote").value.trim())}
   else if(f.id==="admitForm"){const n=Math.floor(+$("slipXp").value||0);if(n<1){$("slipXp").focus();return}admit(n,$("slipNote").value.trim())}
   else if(f.id==="bossForm"){const name=$("bossName").value.trim();if(!name){$("bossName").focus();return}
     state.boss[ui.week]={name,tier:f.tier.value,claimed:false};persist();render();toast("Boss summoned")}
