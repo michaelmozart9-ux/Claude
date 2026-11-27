@@ -226,6 +226,7 @@ main{padding-block:40px 80px}
 .mk-price>b{display:block;font-family:var(--f-serif);font-weight:500;font-size:clamp(56px,9vw,92px);line-height:.95;margin-top:6px}
 .mk-chg{font-size:14px;color:var(--ink-2);display:flex;gap:10px;margin-top:8px}
 .mk-chg b{font-weight:600}
+.mk-mom{font-size:12.5px;color:var(--ink-2);margin-top:6px;min-height:18px}
 .mk-kv{display:grid;gap:4px}.mk-kv b{font-family:var(--f-serif);font-size:26px;font-weight:500;line-height:1}
 .rng{margin-left:auto;display:flex;gap:2px}
 .rng button{padding:6px 12px;font-size:12.5px;color:var(--ink-3);border-radius:var(--r)}
@@ -546,7 +547,7 @@ details.rules{background:var(--s1);border:1px solid var(--line);border-radius:22
   <div class="view" id="vMarket" hidden>
     <section>
       <div class="mk-head">
-        <div class="mk-price"><span class="cap" id="mkCap">$LOCK · your lock-in stock</span><b class="num" id="mkP">100.00</b><div class="mk-chg num" id="mkD"></div></div>
+        <div class="mk-price"><span class="cap" id="mkCap">$LOCK · your lock-in stock</span><b class="num" id="mkP">100.00</b><div class="mk-chg num" id="mkD"></div><div class="mk-mom" id="mkM"></div></div>
         <div class="mk-kv"><span class="cap">All-time high</span><b class="num" id="mkA">100.00</b></div>
         <div class="rng" id="mkR" role="group" aria-label="Chart range"><button type="button" data-rng="1W">This week</button><button type="button" data-rng="ALL">Lock-in</button></div>
       </div>
@@ -573,7 +574,8 @@ details.rules{background:var(--s1);border:1px solid var(--line);border-radius:22
         <li>Three objectives: your first €100 earned online, the piano concert and the winter exams.</li>
         <li>Log real income only. Each euro pays 5 XP and 5 credits. Reaching €1, €10, €25, €50 and €100 pays bonus XP and lifts your stock.</li>
         <li>Missions pay 10, 25, 50 or 100 XP and the same in credits. Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
-        <li>$LOCK rises 1% per 25 XP, jumps on milestones (perfect day, streaks, levels, objectives, purchases) and falls up to 6% for a day with missed missions.</li>
+        <li>$LOCK moves smoothly. A mission lifts it 1% per 25 XP, eased in over four hours. Milestones ease in over three hours; a slip crashes it within twenty minutes.</li>
+        <li>After three waking hours with no progress it drifts down 0.2% an hour (11pm to 7am doesn't count). Missed missions cost up to 4% at the end of the day.</li>
         <li>Major missions pay 1,000 XP and 1,000 credits when complete and lift your stock 20%. Each prep session pays 25 XP.</li>
         <li>XP raises your level and only drops when you admit a slip. Credits buy residences and vehicles in the vault.</li>
         <li>You can plan future days but only complete today or earlier. On a phone, swipe a mission right to complete it.</li>
@@ -654,7 +656,9 @@ const fresh=()=>({v:2,season:SEASON,offer:"",updatedAt:0,xp:0,credits:0,area:{bo
 function normalize(s){if(s&&s.season!==SEASON)s=null;const f=fresh();s=Object.assign(f,s||{});s.area=Object.assign({body:0,wealth:0,mind:0},s.area);
   s.owned={house:(s.owned&&s.owned.house)||["h0"],car:(s.owned&&s.owned.car)||["c0"]};s.active=Object.assign({house:"h0",car:"c0"},s.active);
   s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};
-  if(!s.stock||!Array.isArray(s.stock.hist)||!s.stock.hist.length)s.stock={p:100,ath:100,hist:[[pd(decStart()).getTime(),100,"ipo","Listed on 1 December at 100.00"]],next:decStart(),perfect:{},ms:{}};
+  if(!s.stock)s.stock={ev:[],next:decStart(),perfect:{},ms:{}};
+  if(!Array.isArray(s.stock.ev)){const h=s.stock.hist||[];s.stock.ev=[];for(let k=1;k<h.length;k++)s.stock.ev.push([h[k][0],(h[k][1]/h[k-1][1]-1)*100,h[k][2],h[k][3]])}
+  delete s.stock.hist;delete s.stock.p;delete s.stock.ath;
   s.money=s.money||{e:[],hit:{}};s.money.e=s.money.e||[];s.money.hit=s.money.hit||{};
   if(!s.majSeeded){s.majors=Object.assign({piano:{id:"piano",title:"Piano concert",kind:"practice",date:null,target:20,ses:[],done:null,created:1},exams:{id:"exams",title:"Winter exams",kind:"study",date:null,target:30,ses:[],done:null,created:2}},s.majors||{});s.majSeeded=1}
   s.majors=s.majors||{};
@@ -717,12 +721,11 @@ function prune(){const cut=addD(today(),-200);for(const k of Object.keys(state.d
   for(const k of Object.keys(state.boss))if(k<cut)delete state.boss[k]}
 
 /* ---------- stock ---------- */
-function move(pct,kind,label,at){const s=state.stock;s.p=Math.max(1,Math.round(s.p*(1+pct/100)*100)/100);s.ath=Math.max(s.ath,s.p);s.hist.push([at||Date.now(),s.p,kind,String(label).slice(0,90)]);if(s.hist.length>500)s.hist.splice(0,s.hist.length-500)}
+function move(pct,kind,label,at){const s=state.stock;s.ev.push([at||Date.now(),Math.round(pct*1000)/1000,kind,String(label).slice(0,90)]);if(s.ev.length>800)s.ev.splice(0,s.ev.length-800)}
 const crashPct=n=>Math.min(60,Math.round(5+n/5));
 function settle(){if(phase()==="pre")return;const s=state.stock,t=today(),end=addD(decEnd(),1),stop=t<end?t:end;let d=s.next<decStart()?decStart():s.next,ch=false;
-  while(d<stop){const ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length,at=Math.min(Date.now(),Math.max(pd(addD(d,1)).getTime()-1000,s.hist[s.hist.length-1][0]+1));
-    if(!ts.length){if(!hasDone(d))move(-2,"down",`No missions set on ${nice(d)}`,at)}
-    else if(c<ts.length)move(-(1-c/ts.length)*6,"down",`Missed ${ts.length-c} of ${ts.length} on ${nice(d)}`,at);
+  while(d<stop){const ts=tasksFor(d),dn=doneOn(d),c=ts.filter(x=>dn[x.id]).length;
+    if(ts.length&&c<ts.length)move(-(1-c/ts.length)*4,"down",`Missed ${ts.length-c} of ${ts.length} on ${nice(d)}`,pd(addD(d,1)).getTime()-6e4);
     d=addD(d,1);ch=true}
   if(ch){s.next=stop;persist();render()}}
 function milestones(d){const s=state.stock,ts=tasksFor(d),dn=doneOn(d);
@@ -838,13 +841,13 @@ function renderSeason(){const ph=phase(),P=state.majors.piano,E=state.majors.exa
     $("prep").innerHTML=items.map(([ok,txt,act,attr])=>`<li><button type="button" class="${ok?"ok":""}" ${attr}><span class="pc">${ok?CHK:""}</span><span class="pt">${txt}</span><span class="pa">${ok?"Done":act+" →"}</span></button></li>`).join("");
     $("prepSum").textContent=`${items.filter(x=>x[0]).length} of ${items.length} ready`}
   if(ph==="post"){let missions=0;for(const[d,v]of Object.entries(state.done))if(inLock(d))missions+=Object.keys(v).length;
-    const majs=Object.values(state.majors),md=majs.filter(m=>m.done).length,L=levelOf(state.xp),c=earned(),chg=(state.stock.p/100-1)*100;
+    const majs=Object.values(state.majors),md=majs.filter(m=>m.done).length,L=levelOf(state.xp),c=earned(),chg=(curP()/100-1)*100;
     $("recap").innerHTML=`<div><span class="cap gold">The December Lock In ${lockYear()} · complete</span><h1 class="launch-h">Thirty-one days,<br><em>${c>=GOAL?"€100 made.":"done."}</em></h1></div>
       <div class="rgrid num"><div><span class="cap">Earned online</span><b class="gold">${eur(c)}</b><span>${c>=GOAL?"Objective one complete":`${eur(GOAL-c)} short of €100`}</span></div>
       <div><span class="cap">Objectives</span><b>${md}<small style="font-size:22px;color:var(--ink-3)"> / ${majs.length}</small></b><span>major missions complete</span></div>
       <div><span class="cap">Perfect days</span><b>${Object.keys(state.stock.perfect).length}<small style="font-size:22px;color:var(--ink-3)"> / 31</small></b><span>every mission cleared</span></div>
       <div><span class="cap">Missions</span><b>${missions}</b><span>completed in December</span></div>
-      <div><span class="cap">$LOCK close</span><b>${state.stock.p.toFixed(2)}</b><span class="${chg>=0?"up":"dn"}">${pctTxt(chg)} since 1 December</span></div>
+      <div><span class="cap">$LOCK close</span><b>${curP().toFixed(2)}</b><span class="${chg>=0?"up":"dn"}">${pctTxt(chg)} since 1 December</span></div>
       <div><span class="cap">Final level</span><b>${L.level}</b><span>${rankOf(L.level)}</span></div></div>`}}
 function openOffer(){closeModal();$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Your offer"><form class="sb" id="offerForm" autocomplete="off">
   <span class="cap gold">Objective one</span><h3>What will you sell?</h3><p>One clear offer, in one line. Who pays you, for what. You can change it later.</p>
@@ -925,41 +928,69 @@ function renderBoss(){const w=ui.week,cur=monOf(today()),b=state.boss[w],dmg=wee
   $("boss").innerHTML=h}
 
 const pctTxt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
+/* ---------- $LOCK: a continuous price built from the event log ----------
+   Every event eases in over its own ramp, so several check-offs blend into one smooth climb.
+   After 3 waking hours (07:00-23:00) without progress the price drifts down 0.2% an hour. */
+const HR=36e5,STEP=6e5,QUIET=3*HR,DRIFT=.002;
+const RAMP={up:4*HR,mile:3*HR,down:4*HR,undo:900e3,crash:1200e3};
+const ease=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+const awake=ms=>{const h=new Date(ms).getHours();return h>=7&&h<23};
+let SER=null,serKey="";
+function buildSeries(){const L=pd(decStart()).getTime(),end=Math.min(Date.now(),pd(addD(decEnd(),1)).getTime()),key=state.updatedAt+"|"+state.stock.ev.length+"|"+Math.floor(end/6e4);
+  if(SER&&serKey===key)return SER;serKey=key;
+  if(end<=L)return SER={T:[L],P:[100],drift:{},ath:100,now:100,pending:0,quiet:0,L,end:L};
+  const E=state.stock.ev.filter(e=>e[0]>=L-HR).sort((a,b)=>a[0]-b[0]),act=E.filter(e=>e[2]==="up"||e[2]==="mile").map(e=>e[0]);
+  const T=[],P=[],drift={},open=[],ln=Math.log(1-DRIFT);let done=1,ai=0,ei=0,last=L,hrs=0,ath=100,tp=L,f=1;
+  for(let t=L;;t=Math.min(t+STEP,end)){
+    while(ai<act.length&&act[ai]<=t)last=act[ai++];
+    const dt=t-tp;if(dt>0&&t-last>QUIET&&awake(t)){hrs+=dt/HR;const k=ds(new Date(t-1));drift[k]=(drift[k]||0)+dt/HR}
+    while(ei<E.length&&E[ei][0]<=t)open.push(E[ei++]);
+    f=1;for(let i=open.length-1;i>=0;i--){const e=open[i],k=ease((t-e[0])/(RAMP[e[2]]||HR));if(k>=1){done*=1+e[1]/100;open.splice(i,1)}else f*=1+e[1]/100*k}
+    const p=Math.max(1,100*done*f*Math.exp(hrs*ln));T.push(t);P.push(p);if(p>ath)ath=p;tp=t;if(t>=end)break}
+  let full=1;for(const e of open)full*=1+e[1]/100;
+  return SER={T,P,drift,ath,now:P[P.length-1],pending:(full/f-1)*100,quiet:(end-last)/HR,L,end}}
+const curP=()=>buildSeries().now;
+function valAt(S,t){const T=S.T;if(t<=T[0])return S.P[0];let lo=0,hi=T.length-1;if(t>=T[hi])return S.P[hi];while(hi-lo>1){const m=(lo+hi)>>1;if(T[m]<=t)lo=m;else hi=m}const k=(t-T[lo])/(T[hi]-T[lo]);return S.P[lo]+(S.P[hi]-S.P[lo])*k}
 let chartCtx=null;
-function renderMarket(){const s=state.stock,h=s.hist,ph=phase(),now=ph==="post"?pd(addD(decEnd(),1)).getTime()-1:Date.now(),days={"1W":7}[ui.range];
+function renderMarket(){const ph=phase(),S=buildSeries(),now=S.end,p=S.now;
   $("mkCap").textContent=ph==="pre"?"$LOCK · lists 1 December at 100.00":"$LOCK · your lock-in stock";
-  if(ph==="pre"){$("mkP").textContent="100.00";$("mkA").textContent="—";$("mkD").innerHTML=`<span>Trading opens in ${Math.round((pd(decStart())-pd(today()))/864e5)} days</span>`;
-    for(const b of $("mkR").children)b.setAttribute("aria-pressed",b.dataset.rng===ui.range);
-    $("feed").innerHTML=`<li><b class="gold">Listing</b><span class="fl">$LOCK lists on 1 December at 100.00. Every mission, payment and slip moves it from there.</span><span class="ft">Dec 1</span></li>`;
-    $("chart").innerHTML=`<div style="height:100%;display:grid;place-items:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--ink-3);font-size:13px">The chart starts on day 1.</div>`;chartCtx=null;return}
-  let t0=days?now-days*864e5:h[0][0];t0=Math.max(t0,h[0][0]);if(now-t0<6e4)t0=now-6e4;
-  let start=h[0][1];const pts=[];for(const e of h){if(e[0]<t0)start=e[1];else pts.push(e)}
-  const chg=(s.p/start-1)*100,up=chg>=0;
-  tween("mkP",s.p,v=>v.toFixed(2));$("mkA").textContent=s.ath.toFixed(2);
-  $("mkD").innerHTML=`<b class="${up?"up":"dn"}">${pctTxt(chg)}</b><span>${days===7?"past week":"since 1 December"}</span>`;
   for(const b of $("mkR").children)b.setAttribute("aria-pressed",b.dataset.rng===ui.range);
-  $("feed").innerHTML=h.slice(-12).reverse().map(e=>{const i=h.indexOf(e),pv=i>0?h[i-1][1]:e[1],d=(e[1]/pv-1)*100;
-    return `<li><b class="num ${i?(d>=0?"up":"dn"):"gold"}">${i?pctTxt(d):"Listed"}</b><span class="fl">${esc(e[3])}</span><span class="ft">${stamp(e[0])}</span></li>`}).join("");
+  if(ph==="pre"){$("mkP").textContent="100.00";$("mkA").textContent="—";$("mkM").textContent="";$("mkD").innerHTML=`<span>Trading opens in ${Math.round((pd(decStart())-pd(today()))/864e5)} days</span>`;
+    $("feed").innerHTML=`<li><b class="gold">Listing</b><span class="fl">$LOCK lists on 1 December at 100.00. Every mission, payment and slip moves it from there.</span><span class="ft">Dec 1</span></li>`;
+    $("chart").innerHTML=`<div style="height:100%;display:grid;place-items:center;border:1px solid var(--line);border-radius:22px;color:var(--ink-3);font-size:13px">The chart starts on day 1.</div>`;chartCtx=null;return}
+  let t0=ui.range==="1W"?Math.max(S.L,now-7*864e5):S.L;if(now-t0<2*HR)t0=Math.max(S.L,now-2*HR);
+  const start=valAt(S,t0),chg=(p/start-1)*100,up=chg>=0;
+  tween("mkP",p,v=>v.toFixed(2));$("mkA").textContent=S.ath.toFixed(2);
+  $("mkD").innerHTML=`<b class="${up?"up":"dn"}">${pctTxt(chg)}</b><span>${ui.range==="1W"?"past week":"since 1 December"}</span>`;
+  $("mkM").innerHTML=ph!=="live"?"":Math.abs(S.pending)>=.05?`<span class="${S.pending>0?"up":"dn"}">${S.pending>0?"▲":"▼"} ${pctTxt(S.pending)}</span> still ${S.pending>0?"building":"landing"}`
+    :S.quiet>QUIET/HR&&awake(Date.now())?`<span class="dn">▼</span> Drifting: ${S.quiet.toFixed(1)} h without progress`:`<span class="up">●</span> Steady`;
+  // feed: events plus daily quiet-hour drift
+  const items=state.stock.ev.map(e=>({t:e[0],pct:e[1],label:e[3]}));
+  for(const[d,h]of Object.entries(S.drift))if(h>.05)items.push({t:Math.min(pd(addD(d,1)).getTime()-1,now),pct:(Math.pow(1-DRIFT,h)-1)*100,label:d===today()?`Quiet hours today · ${h.toFixed(1)} h without progress`:`Quiet hours on ${nice(d)} · ${h.toFixed(1)} h`});
+  items.sort((a,b)=>b.t-a.t);const top=items.slice(0,12);if(top.length<12)top.push({t:S.L,ipo:1,label:"Listed on 1 December at 100.00"});
+  $("feed").innerHTML=top.map(e=>`<li><b class="num ${e.ipo?"gold":e.pct>=0?"up":"dn"}">${e.ipo?"Listed":pctTxt(e.pct)}</b><span class="fl">${esc(e.label)}</span><span class="ft">${stamp(e.t)}</span></li>`).join("");
   if(ui.view!=="market")return; // the chart needs a visible width; it draws when Market opens
-  const host=$("chart"),W=Math.max(260,host.clientWidth||700),H=280,pl=0,pr=60,pt=16,pb=28,vals=[start].concat(pts.map(e=>e[1]));
-  let lo=Math.min.apply(0,vals),hi=Math.max.apply(0,vals);if(hi-lo<2){lo-=1.5;hi+=1.5}const padY=(hi-lo)*.14;lo-=padY;hi+=padY;
-  const X=t=>pl+(t-t0)/(now-t0)*(W-pl-pr),Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),col=up?"var(--up)":"var(--down)",hex=up?"#7cc4a0":"#e2806f";
-  let d=`M${X(t0).toFixed(1)} ${Y(start).toFixed(1)}`;for(const e of pts)d+=`L${X(e[0]).toFixed(1)} ${Y(e[1]).toFixed(1)}`;d+=`L${X(now).toFixed(1)} ${Y(s.p).toFixed(1)}`;
-  let g="";for(let i=0;i<4;i++){const v=lo+padY+(hi-lo-2*padY)*i/3,y=Y(v).toFixed(1);g+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="rgba(170,190,230,.06)"/><text x="${W-pr+12}" y="${+y+4}">${v.toFixed(2)}</text>`}
-  const marks=pts.filter(e=>e[2]==="mile"||e[2]==="crash").map(e=>`<circle cx="${X(e[0]).toFixed(1)}" cy="${Y(e[1]).toFixed(1)}" r="3.5" fill="${e[2]==="mile"?"var(--gold)":"var(--down)"}" stroke="var(--bg)" stroke-width="2"/>`).join("");
+  const host=$("chart"),W=Math.max(260,host.clientWidth||700),H=280,pr=60,pt=16,pb=28;
+  const idx=[];for(let i=0;i<S.T.length;i++)if(S.T[i]>=t0)idx.push(i);
+  const stride=Math.max(1,Math.ceil(idx.length/420)),pts=[[t0,start]];for(let k=0;k<idx.length;k+=stride)pts.push([S.T[idx[k]],S.P[idx[k]]]);pts.push([now,p]);
+  let lo=Infinity,hi=-Infinity;for(const q of pts){lo=Math.min(lo,q[1]);hi=Math.max(hi,q[1])}if(hi-lo<2){const m=(hi+lo)/2;lo=m-1.5;hi=m+1.5}const padY=(hi-lo)*.14;lo-=padY;hi+=padY;
+  const X=t=>(t-t0)/(now-t0)*(W-pr),Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),col=up?"var(--up)":"var(--down)",hex=up?"#7cc4a0":"#e2806f";
+  let d="";pts.forEach((q,k)=>{d+=(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)});
+  let g="";for(let i=0;i<4;i++){const v=lo+padY+(hi-lo-2*padY)*i/3,y=Y(v).toFixed(1);g+=`<line x1="0" x2="${W-pr}" y1="${y}" y2="${y}" stroke="rgba(170,190,230,.06)"/><text x="${W-pr+12}" y="${+y+4}">${v.toFixed(2)}</text>`}
+  const marks=state.stock.ev.filter(e=>(e[2]==="mile"||e[2]==="crash")&&e[0]>=t0&&e[0]<=now).map(e=>{const te=Math.min(now,e[0]+RAMP[e[2]]);return `<circle cx="${X(te).toFixed(1)}" cy="${Y(valAt(S,te)).toFixed(1)}" r="3.5" fill="${e[2]==="mile"?"var(--gold)":"var(--down)"}" stroke="var(--bg)" stroke-width="2"/>`}).join("");
   const sd=new Date(t0);
-  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="mkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hex}" stop-opacity=".16"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></linearGradient></defs>
-    ${g}<path d="${d}L${X(now).toFixed(1)} ${H-pb}L${X(t0).toFixed(1)} ${H-pb}Z" fill="url(#mkG)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/>${marks}
-    <circle cx="${X(now).toFixed(1)}" cy="${Y(s.p).toFixed(1)}" r="4" fill="${col}" stroke="var(--bg)" stroke-width="2"/>
-    <line id="mkX" y1="${pt}" y2="${H-pb}" stroke="var(--ink-3)" stroke-dasharray="2 3" visibility="hidden"/>
-    <text x="${pl}" y="${H-6}">${MON[sd.getMonth()]} ${sd.getDate()}${now-t0<864e5?`, ${pad(sd.getHours())}:${pad(sd.getMinutes())}`:""}</text><text x="${W-pr}" y="${H-6}" text-anchor="end">Now</text></svg><div class="tip" id="mkTip" hidden></div>`;
-  chartCtx={pts,X,W,h}}
-function chartHover(e){const c=chartCtx,host=$("chart"),tip=$("mkTip"),ln=$("mkX");if(!c||!tip)return;
-  if(e.type==="pointerleave"||!c.pts.length){tip.hidden=true;if(ln)ln.setAttribute("visibility","hidden");return}
-  const r=host.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*c.W;let best=c.pts[0];for(const p of c.pts)if(Math.abs(c.X(p[0])-px)<Math.abs(c.X(best[0])-px))best=p;
-  const i=c.h.indexOf(best),pv=i>0?c.h[i-1][1]:best[1],d=(best[1]/pv-1)*100,x=c.X(best[0]);
-  ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");
-  tip.innerHTML=`<b class="num">${best[1].toFixed(2)} <small class="${d>=0?"up":"dn"}" style="font-family:var(--f-sans);font-size:12px">${i?pctTxt(d):""}</small></b><span>${esc(best[3])}</span><span style="color:var(--ink-3)">${stamp(best[0])}</span>`;
+  host.innerHTML=`<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="mkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hex}" stop-opacity=".18"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></linearGradient></defs>
+    ${g}<path d="${d}L${X(now).toFixed(1)} ${H-pb}L0 ${H-pb}Z" fill="url(#mkG)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>${marks}
+    <circle cx="${X(now).toFixed(1)}" cy="${Y(p).toFixed(1)}" r="4" fill="${col}" stroke="var(--bg)" stroke-width="2"><animate attributeName="r" values="4;6;4" dur="2.4s" repeatCount="indefinite"/></circle>
+    <line id="mkX" y1="${pt}" y2="${H-pb}" stroke="var(--ink-3)" stroke-dasharray="2 3" visibility="hidden"/><circle id="mkXd" r="4" fill="var(--ink)" visibility="hidden"/>
+    <text x="0" y="${H-6}">${MON[sd.getMonth()]} ${sd.getDate()}${now-t0<864e5?`, ${pad(sd.getHours())}:${pad(sd.getMinutes())}`:""}</text><text x="${W-pr}" y="${H-6}" text-anchor="end">Now</text></svg><div class="tip" id="mkTip" hidden></div>`;
+  chartCtx={S,t0,now,X,Y,W}}
+function chartHover(e){const c=chartCtx,host=$("chart"),tip=$("mkTip"),ln=$("mkX"),dot=$("mkXd");if(!c||!tip)return;
+  if(e.type==="pointerleave"){tip.hidden=true;ln.setAttribute("visibility","hidden");dot.setAttribute("visibility","hidden");return}
+  const r=host.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*c.W,t=Math.max(c.t0,Math.min(c.now,c.t0+px/(c.W-60)*(c.now-c.t0))),v=valAt(c.S,t),x=c.X(t),y=c.Y(v);
+  let near=null,best=1.5*HR;for(const ev of state.stock.ev){const dd=Math.abs(ev[0]-t);if(dd<best){best=dd;near=ev}}
+  ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");dot.setAttribute("cx",x);dot.setAttribute("cy",y);dot.setAttribute("visibility","visible");
+  tip.innerHTML=`<b class="num">${v.toFixed(2)}</b>${near?`<span><span class="${near[1]>=0?"up":"dn"}">${pctTxt(near[1])}</span> ${esc(near[3])}</span>`:""}<span style="color:var(--ink-3)">${stamp(t)}</span>`;
   tip.hidden=false;const sx=x/c.W*r.width,tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(r.width-tw,sx<r.width/2?sx+14:sx-tw-14))+"px"}
 function renderCal(){const a=decStart(),t=today(),cash={},ev={};for(const e of state.money.e)cash[ds(new Date(e[3]))]=1;for(const m of Object.values(state.majors))if(m.date)ev[m.date]=m.title;
   let h=DOW.map(d=>`<span class="dw">${d[0]}</span>`).join("")+`<span></span>`.repeat(dow(a));let full=0,past=0;
@@ -1013,8 +1044,8 @@ function openAdmit(){if(phase()!=="live"){toast("Slips can only be admitted duri
   <p class="prev num" id="slipPrev"></p>
   <div class="acts"><button class="btn danger fill" type="submit">Take the hit</button><button class="btn ghost" type="button" data-close>Cancel</button></div></form></div></div>`;slipPreview()}
 function slipPreview(){const el=$("slipPrev");if(!el)return;const n=Math.max(0,Math.floor(+$("slipXp").value||0));if(!n){el.textContent="Enter how much XP to lose.";return}
-  const lost=Math.min(n,state.xp),pct=crashPct(n),np=Math.max(1,state.stock.p*(1-pct/100)),lv=levelOf(state.xp).level,nl=levelOf(state.xp-lost).level;
-  el.textContent=`−${lost} XP${lost<n?" (all you have)":""} · $LOCK ${state.stock.p.toFixed(2)} → ${np.toFixed(2)} (−${pct}%)`+(nl<lv?` · level ${lv} → ${nl}`:"")}
+  const lost=Math.min(n,state.xp),pct=crashPct(n),np=Math.max(1,curP()*(1-pct/100)),lv=levelOf(state.xp).level,nl=levelOf(state.xp-lost).level;
+  el.textContent=`−${lost} XP${lost<n?" (all you have)":""} · $LOCK ${curP().toFixed(2)} → ${np.toFixed(2)} (−${pct}%)`+(nl<lv?` · level ${lv} → ${nl}`:"")}
 function confirmReset(){$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Reset progress"><div class="sb"><h3>Reset all progress?</h3><p>This erases your income log, level, credits, missions, stock history and collection on every synced device. It can't be undone.</p><div class="acts"><button class="btn danger fill" type="button" data-reset>Erase everything</button><button class="btn ghost" type="button" data-close>Keep my progress</button></div></div></div></div>`}
 function overlay(label,big,sub){beep("level");const el=document.createElement("div");el.className="over";el.innerHTML=`<div><span class="cap">${esc(label)}</span><b class="num">${esc(big)}</b><span>${esc(sub)}</span></div>`;
   document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,3400)}
@@ -1090,7 +1121,7 @@ for(const ev of["pointermove","pointerdown","pointerleave"])$("chart").addEventL
 let rzT=0;window.addEventListener("resize",()=>{moveInd();clearTimeout(rzT);rzT=setTimeout(()=>{if(ui.view==="market")renderMarket()},150)});
 try{document.fonts.ready.then(moveInd)}catch(e){}
 window.addEventListener("hashchange",()=>{const v=location.hash.slice(1);if(VIEWS.includes(v)&&v!==ui.view)go(v)});
-let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;if(inLock(t))ui.sel=t,ui.week=monOf(t);settle();render()}else renderCount()},20000);
+let lastDay=today();setInterval(()=>{const t=today();if(t!==lastDay){lastDay=t;if(inLock(t))ui.sel=t,ui.week=monOf(t);settle();render()}else{renderCount();if(ui.view==="market")renderMarket()}},20000);
 
 ui.view=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"today";
 prune();renderSound();render();initSync().then(()=>{if(!dbDoc)settle()});
