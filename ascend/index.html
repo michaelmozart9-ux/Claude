@@ -18,7 +18,9 @@
 html,body{background:var(--bg)}
 body{color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+.inp[type=date]{color-scheme:dark}
 button{cursor:pointer;background:none;border:0;padding:0}
 a{color:inherit;text-decoration:none}
 :focus-visible{outline:1px solid var(--gold);outline-offset:3px}
@@ -99,6 +101,23 @@ main{padding-block:40px 80px}
 .mini .ft{font-size:12px;color:var(--ink-3);white-space:nowrap}
 .mini .rm{align-self:center}
 
+/* major missions */
+.majors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.maj{position:relative;background:linear-gradient(160deg,rgba(201,165,95,.10),transparent 55%),var(--s1);border:1px solid rgba(201,165,95,.28);border-radius:6px;padding:26px;display:grid;gap:16px;min-width:0;align-content:start}
+.maj.done{border-color:var(--gold)}
+.maj-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.maj h4{margin:4px 0 0;font-family:var(--f-serif);font-weight:500;font-size:clamp(28px,3.4vw,36px);line-height:1.05;overflow-wrap:anywhere}
+.maj-when{font-size:13px;color:var(--ink-2)}
+.maj-when b{color:var(--ink);font-weight:600}
+.maj-xp{text-align:right;white-space:nowrap}
+.maj-xp b{display:block;font-family:var(--f-serif);font-weight:600;font-size:30px;line-height:1;color:var(--gold)}
+.maj-xp span{font-size:10.5px;font-weight:600;letter-spacing:.14em;color:var(--ink-3)}
+.maj-act{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.maj-edit{margin-left:auto}
+.add-maj{border:1px dashed var(--line-2);border-radius:6px;padding:20px;color:var(--ink-2);font-size:14px;text-align:left}
+.add-maj:hover{border-color:var(--gold);color:var(--ink)}
+.cday.event{box-shadow:inset 0 0 0 2px var(--gold-2);color:var(--ink)}
+@media (max-width:760px){.majors{grid-template-columns:minmax(0,1fr)}.maj{padding:20px}}
 /* today grid */
 .plan{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:56px;align-items:start}
 .week{display:grid;grid-template-columns:28px repeat(7,minmax(0,1fr)) 28px;align-items:center;gap:4px;margin-bottom:22px}
@@ -336,6 +355,11 @@ details.rules ul{margin:0 0 18px;padding-left:18px;color:var(--ink-2);font-size:
       </div>
     </section>
 
+    <section aria-label="Major missions">
+      <div class="sec-h"><h3>Major missions</h3><span>The big ones. Each pays a fortune in XP.</span></div>
+      <div class="majors" id="majors"></div>
+    </section>
+
     <section class="plan">
       <div>
         <div class="sec-h"><h3 id="dayTitle">Today</h3><span id="daySum"></span></div>
@@ -385,7 +409,7 @@ details.rules ul{margin:0 0 18px;padding-left:18px;color:var(--ink-2);font-size:
       <div>
         <div class="sec-h"><h3 id="calTitle">December</h3><span id="calSum"></span></div>
         <div class="cal" id="cal"></div>
-        <div class="legend"><span><i style="background:var(--gold)"></i>All complete</span><span><i style="box-shadow:inset 0 0 0 1px var(--gold)"></i>Partial</span><span><i style="background:rgba(214,128,111,.3)"></i>Missed</span><span><i style="background:var(--gold-2);border-radius:50%;width:5px;height:5px"></i>Money earned</span></div>
+        <div class="legend"><span><i style="background:var(--gold)"></i>All complete</span><span><i style="box-shadow:inset 0 0 0 1px var(--gold)"></i>Partial</span><span><i style="background:rgba(214,128,111,.3)"></i>Missed</span><span><i style="background:var(--gold-2);border-radius:50%;width:5px;height:5px"></i>Money earned</span><span><i style="box-shadow:inset 0 0 0 2px var(--gold-2)"></i>Major mission</span></div>
       </div>
     </section>
     <section class="two">
@@ -401,6 +425,7 @@ details.rules ul{margin:0 0 18px;padding-left:18px;color:var(--ink-2);font-size:
         <li>Log real income only. Each euro pays 5 XP and 5 credits. Reaching €1, €10, €25, €50 and €100 pays bonus XP and lifts your stock.</li>
         <li>Missions pay 10, 25, 50 or 100 XP and the same in credits. Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
         <li>$LOCK rises 1% per 25 XP, jumps on milestones (perfect day, streaks, levels, objectives, purchases) and falls up to 6% for a day with missed missions.</li>
+        <li>Major missions pay 1,000 XP and 1,000 credits when complete and lift your stock 20%. Each prep session pays 25 XP.</li>
         <li>XP raises your level and only drops when you admit a slip. Credits buy residences and vehicles in the vault.</li>
         <li>You can plan future days but only complete today or earlier. On a phone, swipe a mission right to complete it.</li>
       </ul></details>
@@ -475,6 +500,8 @@ function normalize(s){const f=fresh();s=Object.assign(f,s||{});s.area=Object.ass
   s.tasks=s.tasks||{};s.done=s.done||{};s.boss=s.boss||{};
   if(!s.stock||!Array.isArray(s.stock.hist)||!s.stock.hist.length)s.stock={p:100,ath:100,hist:[[Date.now(),100,"ipo","Listed at 100.00"]],next:today(),perfect:{},ms:{}};
   s.money=s.money||{e:[],hit:{}};s.money.e=s.money.e||[];s.money.hit=s.money.hit||{};
+  if(!s.majSeeded){s.majors=Object.assign({piano:{id:"piano",title:"Piano concert",kind:"practice",date:null,target:20,ses:[],done:null,created:1},exams:{id:"exams",title:"Winter exams",kind:"study",date:null,target:30,ses:[],done:null,created:2}},s.majors||{});s.majSeeded=1}
+  s.majors=s.majors||{};
   s.stock.perfect=s.stock.perfect||{};s.stock.ms=s.stock.ms||{};s.stock.next=s.stock.next||today();return s}
 let state=normalize(fresh());
 try{const raw=localStorage.getItem(LS);if(raw)state=normalize(JSON.parse(raw))}catch(e){}
@@ -568,6 +595,23 @@ function removeIncome(id){const i=state.money.e.findIndex(e=>e[0]===id);if(i<0)r
   const t=earned();for(const[c,,bx]of MILES)if(t<c&&state.money.hit[c]){delete state.money.hit[c];state.xp=Math.max(0,state.xp-bx);state.credits-=bx}
   move(-Math.min(25,e[1]/200+2),"undo",`Removed income entry (${eur(e[1])})`);persist();closeModal();render();toast("Income entry removed")}
 
+/* ---------- major missions ---------- */
+const MAJ_XP=1000,SES_XP=25;
+const sesWord=m=>m.kind==="study"?"study session":"practice session";
+function majList(){return Object.values(state.majors).sort((a,b)=>(a.date||"9999")<(b.date||"9999")?-1:(a.date||"9999")>(b.date||"9999")?1:a.created-b.created)}
+function logSession(id){const m=state.majors[id];if(!m||m.done)return;const before=levelOf(state.xp).level;
+  m.ses.push([Date.now(),SES_XP]);state.xp+=SES_XP;state.credits+=SES_XP;state.area.mind+=SES_XP;move(1,"up",`${m.title}: ${sesWord(m)} ${m.ses.length}`);
+  if(m.ses.length===m.target)move(5,"mile",`${m.title}: prep target reached`);
+  const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
+  persist();render();beep("ok");toast(`+${SES_XP} XP · ${sesWord(m)} ${m.ses.length} of ${m.target}`);if(after>before)overlay("Level reached",after,rankOf(after)+" tier")}
+function undoSession(id){const m=state.majors[id];if(!m||!m.ses.length||m.done)return;const e=m.ses.pop();state.xp=Math.max(0,state.xp-e[1]);state.credits-=e[1];state.area.mind=Math.max(0,state.area.mind-e[1]);
+  move((1/1.01-1)*100,"undo",`${m.title}: removed a ${sesWord(m)}`);persist();closeModal();render();toast("Session removed")}
+function completeMajor(id){const m=state.majors[id];if(!m||m.done)return;const before=levelOf(state.xp).level;
+  m.done=Date.now();state.xp+=MAJ_XP;state.credits+=MAJ_XP;state.area.mind+=MAJ_XP;move(20,"mile",`Major mission complete: ${m.title}`);
+  const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
+  persist();closeModal();render();overlay("Major mission complete",m.title,`+${fmtN(MAJ_XP)} XP · +${fmtN(MAJ_XP)} credits`)}
+function reopenMajor(id){const m=state.majors[id];if(!m||!m.done)return;m.done=null;state.xp=Math.max(0,state.xp-MAJ_XP);state.credits-=MAJ_XP;state.area.mind=Math.max(0,state.area.mind-MAJ_XP);
+  move((1/1.2-1)*100,"undo",`Reopened: ${m.title}`);persist();closeModal();render();toast("Mission reopened, reward taken back")}
 function toggle(id){
   const d=ui.sel,t=state.tasks[id];if(!t)return;
   if(d>today()){toast("You can plan this day, but only complete missions for today or earlier.",true);return}
@@ -595,7 +639,7 @@ function renderView(){$("vToday").hidden=ui.view!=="today";$("vMarket").hidden=u
   if(ui.view==="market")renderMarket()}
 
 /* ---------- render ---------- */
-function render(){renderTop();renderDial();renderStats();renderWeek();renderDay();renderBoss();renderMarket();renderCal();renderIncome();renderAttr();renderVault();renderView()}
+function render(){renderTop();renderDial();renderMajors();renderStats();renderWeek();renderDay();renderBoss();renderMarket();renderCal();renderIncome();renderAttr();renderVault();renderView()}
 function renderTop(){const t=today(),a=decStart(),z=decEnd(),el=$("cd");
   if(t<a){const n=Math.round((pd(a)-pd(t))/864e5);el.innerHTML=`Starts in <b>${n} day${n===1?"":"s"}</b>`}
   else if(t<=z){const n=pd(t).getDate(),left=31-n;el.innerHTML=`Day <b>${n}</b> of 31`+(left?` · ${left} left`:" · final day")}
@@ -623,6 +667,34 @@ function renderDial(){const c=earned(),p=Math.min(1,c/GOAL),done=c>=GOAL;
   $("gNext").textContent=nx?(c?`Next: ${nx[1].toLowerCase()}, ${eur(nx[0]-c)} away. Worth a ${nx[2]} XP bonus.`:"Every euro pays 5 XP. Reaching €1, €10, €25, €50 and €100 pays a bonus."):"You made it. Keep logging; every euro still pays 5 XP.";
   $("incMini").innerHTML=state.money.e.slice(-3).reverse().map(incRow).join("")}
 const incRow=e=>`<li><b class="num">+${eur(e[1])}</b><span class="fl">${esc(e[2]||"Income")}</span><span class="ft">${nice(ds(new Date(e[3])))}</span><button type="button" class="rm" data-rminc="${e[0]}" aria-label="Remove ${eur(e[1])} entry">${ic("x")}</button></li>`;
+function renderMajors(){const t=today();
+  $("majors").innerHTML=majList().map(m=>{const n=m.ses.length,pct=Math.min(100,n/m.target*100);
+    let when;if(!m.date)when=`Date not set · <button class="link" type="button" data-majedit="${m.id}">Set the date</button>`;
+    else{const dd=Math.round((pd(m.date)-pd(t))/864e5),dt=pd(m.date);when=`${DOWL[dow(m.date)]} ${dt.getDate()} ${MONL[dt.getMonth()]} · <b>${dd>1?`in ${dd} days`:dd===1?"tomorrow":dd===0?"today":`${-dd} day${dd===-1?"":"s"} ago`}</b>`}
+    return `<article class="maj${m.done?" done":""}"><div class="maj-top"><div><span class="cap gold">Major mission</span><h4>${esc(m.title)}</h4></div><div class="maj-xp"><b class="num">${m.done?"✓":fmtN(MAJ_XP)}</b><span>${m.done?"COMPLETE":"XP"}</span></div></div>
+      <div class="maj-when">${when}</div>
+      <div style="display:grid;gap:8px"><div class="kv num"><span>${n} of ${m.target} ${sesWord(m)}s</span><span>+${SES_XP} XP each</span></div><div class="pbar"><i style="width:${pct}%"></i></div></div>
+      <div class="maj-act">${m.done?`<p class="gold" style="margin:0;font-size:13.5px">Done on ${nice(ds(new Date(m.done)))}. +${fmtN(MAJ_XP)} XP collected.</p>`
+        :`<button class="btn ghost sm" type="button" data-ses="${m.id}">Log ${sesWord(m)}</button><button class="btn sm" type="button" data-majdone="${m.id}">Complete · +${fmtN(MAJ_XP)} XP</button>`}
+        <button class="link maj-edit" type="button" data-majedit="${m.id}">Edit</button></div></article>`}).join("")
+    +`<button type="button" class="add-maj" data-majnew="1">+ Add a major mission</button>`}
+function openMajor(id){closeModal();const m=id?state.majors[id]:null,isNew=!m;
+  $("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${isNew?"New major mission":"Edit "+esc(m.title)}"><form class="sb" id="majForm" data-id="${isNew?"":m.id}" autocomplete="off">
+  <span class="cap gold">Major mission</span><h3>${isNew?"New major mission":esc(m.title)}</h3>
+  <label class="field"><span class="cap">Name</span><input class="inp" type="text" id="majTitle" maxlength="50" value="${isNew?"":esc(m.title)}" placeholder="e.g. Driving test"></label>
+  <label class="field"><span class="cap">Date</span><input class="inp" type="date" id="majDate" value="${m&&m.date?m.date:""}"></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <label class="field"><span class="cap">Prep type</span><select class="inp" id="majKind"><option value="practice"${m&&m.kind==="study"?"":" selected"}>Practice sessions</option><option value="study"${m&&m.kind==="study"?" selected":""}>Study sessions</option></select></label>
+    <label class="field"><span class="cap">Prep target</span><input class="inp" type="number" id="majTarget" min="1" max="200" step="1" value="${m?m.target:20}"></label>
+  </div>
+  <p>Completing it pays ${fmtN(MAJ_XP)} XP and ${fmtN(MAJ_XP)} credits. Each prep session pays ${SES_XP} XP.</p>
+  <div class="acts"><button class="btn" type="submit">${isNew?"Add mission":"Save"}</button><button class="btn ghost" type="button" data-close>Cancel</button></div>
+  ${isNew?"":`<div class="foot" style="margin-top:4px">${m.ses.length&&!m.done?`<button class="link" type="button" data-sesundo="${m.id}">Remove last session</button>`:""}${m.done?`<button class="link" type="button" data-majreopen="${m.id}">Reopen (takes the reward back)</button>`:""}${!m.ses.length&&!m.done?`<button class="link" type="button" data-majdel="${m.id}" style="color:var(--down)">Delete mission</button>`:""}</div>`}
+  </form></div></div>`;setTimeout(()=>{const i=$(isNew?"majTitle":"majDate");if(i)i.focus()},60)}
+function confirmMajor(id){const m=state.majors[id];if(!m)return;const early=m.date&&m.date>today();
+  $("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Complete ${esc(m.title)}"><div class="sb"><span class="cap gold">Major mission</span><h3>Complete ${esc(m.title)}?</h3>
+    <p>${early?`It's scheduled for ${nice(m.date)}. Only mark it done once it has actually happened. `:""}You get ${fmtN(MAJ_XP)} XP, ${fmtN(MAJ_XP)} credits and a 20% lift on $LOCK.</p>
+    <div class="acts"><button class="btn" type="button" data-majyes="${m.id}">It's done</button><button class="btn ghost" type="button" data-close>Not yet</button></div></div></div></div>`}
 function renderStats(){const L=levelOf(state.xp),st=streakNow(),m=Math.round((multFor(today())-1)*100);
   $("sLv").textContent=L.level;$("sRank").textContent=`${rankOf(L.level)} · ${fmtN(L.into)}/${fmtN(L.need)} XP`;$("sLvBar").style.width=(L.into/L.need*100).toFixed(1)+"%";
   $("sSt").textContent=st;$("sMult").textContent=m?`days · +${m}% XP`:st===1?"day":"days";$("sCr").textContent=fmtN(state.credits);
@@ -691,11 +763,11 @@ function chartHover(e){const c=chartCtx,host=$("chart"),tip=$("mkTip"),ln=$("mkX
   ln.setAttribute("x1",x);ln.setAttribute("x2",x);ln.setAttribute("visibility","visible");
   tip.innerHTML=`<b class="num">${best[1].toFixed(2)} <small class="${d>=0?"up":"dn"}" style="font-family:var(--f-sans);font-size:12px">${i?pctTxt(d):""}</small></b><span>${esc(best[3])}</span><span style="color:var(--ink-3)">${stamp(best[0])}</span>`;
   tip.hidden=false;const sx=x/c.W*r.width,tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(r.width-tw,sx<r.width/2?sx+14:sx-tw-14))+"px"}
-function renderCal(){const a=decStart(),t=today(),cash={};for(const e of state.money.e)cash[ds(new Date(e[3]))]=1;
+function renderCal(){const a=decStart(),t=today(),cash={},ev={};for(const e of state.money.e)cash[ds(new Date(e[3]))]=1;for(const m of Object.values(state.majors))if(m.date)ev[m.date]=m.title;
   let h=DOW.map(d=>`<span class="dw">${d[0]}</span>`).join("")+`<span></span>`.repeat(dow(a));let full=0,past=0;
   for(let i=0;i<31;i++){const d=addD(a,i),ts=tasksFor(d),dn=doneOn(d),k=ts.filter(x=>dn[x.id]).length;
     const cls=ts.length&&k===ts.length?"full":k?"part":d<t?"miss":"";if(cls==="full")full++;if(d<=t)past++;
-    h+=`<button type="button" class="cday ${cls}${d===t?" today":""}${cash[d]?" cash":""}" data-day="${d}" data-goto="today" aria-label="December ${i+1}: ${ts.length?`${k} of ${ts.length} complete`:"no missions"}${cash[d]?", money earned":""}">${i+1}</button>`}
+    h+=`<button type="button" class="cday ${cls}${d===t?" today":""}${cash[d]?" cash":""}${ev[d]?" event":""}" data-day="${d}" data-goto="today" title="${ev[d]?esc(ev[d]):""}" aria-label="December ${i+1}: ${ts.length?`${k} of ${ts.length} complete`:"no missions"}${cash[d]?", money earned":""}${ev[d]?", "+esc(ev[d]):""}">${i+1}</button>`}
   $("cal").innerHTML=h;$("calTitle").textContent="December "+lockYear();
   $("calSum").textContent=past?`${full} of ${past} days fully complete`:"Your month at a glance"}
 function renderIncome(){const es=state.money.e.slice().reverse(),c=earned();
@@ -769,6 +841,14 @@ document.addEventListener("click",e=>{
   else if(d.rng){ui.range=d.rng;saveUi();renderMarket()}
   else if(d.slip){$("slipXp").value=d.slip;slipPreview()}
   else if(d.rminc)removeIncome(d.rminc);
+  else if(d.ses)logSession(d.ses);
+  else if(d.majdone)confirmMajor(d.majdone);
+  else if(d.majyes)completeMajor(d.majyes);
+  else if(d.majedit)openMajor(d.majedit);
+  else if(d.majnew)openMajor(null);
+  else if(d.sesundo)undoSession(d.sesundo);
+  else if(d.majreopen)reopenMajor(d.majreopen);
+  else if(d.majdel){delete state.majors[d.majdel];persist();closeModal();render();toast("Mission deleted")}
   else if(d.buy){const kind=d.buy[0]==="h"?"house":"car",it=CAT[kind].find(i=>i.id===d.buy);
     if(it&&state.credits>=it.price&&levelOf(state.xp).level>=it.lvl&&!state.owned[kind].includes(it.id)){state.credits-=it.price;state.owned[kind].push(it.id);state.active[kind]=it.id;if(it.price>0)move(3,"mile",`Acquired ${it.name}`);persist();closeModal();render();beep("buy");overlay("Acquired",it.name,kind==="house"?"your new residence":"your new vehicle")}}
   else if(d.use){const kind=d.use[0]==="h"?"house":"car";if(state.owned[kind].includes(d.use)){state.active[kind]=d.use;persist();closeModal();render()}}
@@ -789,6 +869,11 @@ document.addEventListener("submit",e=>{e.preventDefault();const f=e.target;
     addTask(title,f.area.value,f.diff.value,f.rep.value);$("taskTitle").value="";$("rOnce").checked=true;$("taskTitle").focus()}
   else if(f.id==="incForm"){const c=Math.round((+$("incAmt").value||0)*100);if(c<1||c>1e7){$("incAmt").focus();return}addIncome(c,$("incNote").value.trim())}
   else if(f.id==="admitForm"){const n=Math.floor(+$("slipXp").value||0);if(n<1){$("slipXp").focus();return}admit(n,$("slipNote").value.trim())}
+  else if(f.id==="majForm"){const title=$("majTitle").value.trim();if(!title){$("majTitle").focus();return}
+    const tg=Math.max(1,Math.min(200,Math.floor(+$("majTarget").value||20))),dt=$("majDate").value||null,kind=$("majKind").value==="study"?"study":"practice",id=f.dataset.id;
+    if(id&&state.majors[id])Object.assign(state.majors[id],{title,date:dt,target:tg,kind});
+    else{const nid="m"+Date.now().toString(36);state.majors[nid]={id:nid,title,kind,date:dt,target:tg,ses:[],done:null,created:Date.now()}}
+    persist();closeModal();render();toast(id?"Saved":"Major mission added")}
   else if(f.id==="bossForm"){const name=$("bossName").value.trim();if(!name){$("bossName").focus();return}
     state.boss[ui.week]={name,tier:f.tier.value,claimed:false};persist();render();toast("Objective set")}
 });
