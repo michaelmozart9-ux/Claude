@@ -135,6 +135,45 @@ main{padding-block:40px 80px}
 .wd.out{opacity:.25;pointer-events:none}
 .wk-arrow[disabled]{opacity:.2;cursor:default}
 @media (max-width:760px){.obj,.rgrid{grid-template-columns:minmax(0,1fr)}.obj div+div{padding-left:0;border-left:0;border-top:1px solid var(--line)}.count{gap:20px}}
+/* moments */
+.cine{position:fixed;inset:0;z-index:95;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 42%,rgba(36,62,128,.42),rgba(3,5,10,.6) 68%),rgba(3,5,10,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);animation:fade .5s ease both}
+.cine.out{animation:fadeOut .45s ease forwards}
+.cine canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen}
+.cine-in{position:relative;display:grid;justify-items:center;gap:16px;text-align:center;padding:24px;max-width:760px}
+.cine .ty{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-2);min-height:20px}
+.cine .ty::after{content:"▍";animation:blink .8s steps(1) infinite;margin-left:2px}
+.cine .ty.done::after{content:""}
+@keyframes blink{50%{opacity:0}}
+.coin{width:min(170px,40vw);aspect-ratio:1;perspective:700px;margin:6px 0}
+.coin svg{width:100%;height:100%;overflow:visible;transform-style:preserve-3d;animation:flip 1.7s 1.5s cubic-bezier(.3,.1,.2,1) both,glowP 2.4s 3.2s ease-in-out infinite}
+.coin .cr{fill:none;stroke:var(--gold-2);stroke-width:2.5;stroke-dasharray:540;stroke-dashoffset:540;animation:drawc 1.1s .7s var(--ease) forwards}
+.coin .cr2{fill:none;stroke:rgba(236,213,159,.35);stroke-width:1;stroke-dasharray:3 5;opacity:0;animation:fadeIn .6s 1.6s forwards}
+.coin .cf{opacity:0;animation:fadeIn .5s 1.5s forwards}
+.coin text{font-family:var(--f-serif);font-weight:600;font-size:74px;fill:#2a1f08;opacity:0;animation:fadeIn .4s 2s forwards}
+@keyframes drawc{to{stroke-dashoffset:0}} @keyframes fadeIn{to{opacity:1}}
+@keyframes flip{0%{transform:rotateY(0) scale(.9)}70%{transform:rotateY(1080deg) scale(1.08)}100%{transform:rotateY(1080deg) scale(1)}}
+@keyframes glowP{0%,100%{filter:drop-shadow(0 0 18px rgba(236,213,159,.35))}50%{filter:drop-shadow(0 0 46px rgba(236,213,159,.7))}}
+.cine h2{margin:0;font-family:var(--f-serif);font-weight:500;font-size:clamp(42px,8vw,86px);line-height:1;letter-spacing:-.01em;text-wrap:balance}
+.cine h2 em{font-style:italic;color:var(--gold-2)}
+.cine p{margin:0;color:var(--ink-2);font-size:15px;max-width:48ch}
+.cine .tk{display:flex;align-items:center;gap:14px;padding:12px 20px;border-radius:999px;background:rgba(124,196,160,.08);box-shadow:inset 0 0 0 1px rgba(124,196,160,.3)}
+.cine .tk b{font-family:var(--f-serif);font-size:30px;font-weight:600;color:var(--up);font-variant-numeric:tabular-nums}
+.cine .tk span{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--ink-2)}
+.cine .tk svg{width:90px;height:30px;overflow:visible}
+.cine .tk path{fill:none;stroke:var(--up);stroke-width:2;stroke-linecap:round;stroke-dasharray:140;stroke-dashoffset:140}
+.cine .tk.go path{animation:drawc 1.3s var(--ease) forwards}
+.cine .lt,.cine .cont{opacity:0;transform:translateY(16px);animation:ltIn .9s var(--ease) forwards}
+@keyframes ltIn{to{opacity:1;transform:none}}
+.cine .chars span{display:inline-block;opacity:0;filter:blur(10px);transform:translateY(24px) scale(1.1);animation:charIn .8s var(--ease) forwards;animation-delay:calc(var(--i)*55ms + 1.1s)}
+@keyframes charIn{to{opacity:1;filter:blur(0);transform:none}}
+.cine .sw{position:absolute;left:50%;top:50%;height:1px;width:0;background:linear-gradient(90deg,transparent,var(--gold-2),transparent);transform:translate(-50%,-50%);animation:sweep 1.2s var(--ease) forwards}
+.cine .sw.b{animation-delay:.15s;margin-top:-140px}.cine .sw.a{margin-top:150px}
+@keyframes sweep{to{width:min(90vw,900px)}}
+.cine .ring{position:absolute;left:50%;top:46%;width:40px;height:40px;border-radius:50%;box-shadow:0 0 0 2px rgba(236,213,159,.7);transform:translate(-50%,-50%);opacity:0;animation:ring 1.8s 1s var(--ease) forwards}
+.cine .ring.r2{animation-delay:1.25s}
+@keyframes ring{0%{opacity:.9;width:40px;height:40px}100%{opacity:0;width:140vmax;height:140vmax}}
+
+@media (prefers-reduced-motion:reduce){.cine *{opacity:1!important;filter:none!important;transform:none!important;stroke-dashoffset:0!important}}
 /* major missions */
 .majors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .maj{position:relative;background:linear-gradient(160deg,rgba(212,178,106,.10),transparent 55%),var(--s1);border:1px solid rgba(212,178,106,.28);border-radius:6px;padding:26px;display:grid;gap:16px;min-width:0;align-content:start}
@@ -576,7 +615,7 @@ details.rules{background:var(--s1);border:1px solid var(--line);border-radius:22
         <li>Missions pay 10, 25, 50 or 100 XP and the same in credits. Each streak day adds 5% XP, up to 50%. Miss a day and the streak resets.</li>
         <li>$LOCK moves smoothly. A mission lifts it 1% per 25 XP, eased in over four hours. Milestones ease in over three hours; a slip crashes it within twenty minutes.</li>
         <li>After three waking hours with no progress it drifts down 0.2% an hour (11pm to 7am doesn't count). Missed missions cost up to 4% at the end of the day.</li>
-        <li>Major missions pay 1,000 XP and 1,000 credits when complete and lift your stock 20%. Each prep session pays 25 XP.</li>
+        <li>Major missions pay 1,000 XP and 1,000 credits when complete, and $LOCK reacts. Each prep session pays 25 XP.</li>
         <li>XP raises your level and only drops when you admit a slip. Credits buy residences and vehicles in the vault.</li>
         <li>You can plan future days but only complete today or earlier. On a phone, swipe a mission right to complete it.</li>
       </ul></details>
@@ -737,17 +776,18 @@ function admit(n,note){if(phase()!=="live")return;const before=levelOf(state.xp)
 
 /* ---------- €100 goal ---------- */
 const GOAL=10000; // cents
-const MILES=[[100,"First euro made online",100,20],[1000,"€10 made online",50,8],[2500,"€25 made online",100,10],[5000,"Halfway: €50 made online",150,15],[10000,"€100 made online",300,30]];
+const MILES=[[1,"First money made online",250,60],[1000,"€10 made online",50,8],[2500,"€25 made online",100,10],[5000,"Halfway: €50 made online",150,15],[10000,"€100 made online",300,30]];
 const eur=c=>"€"+(c%100?(c/100).toFixed(2):String(c/100));
 const earned=()=>state.money.e.reduce((a,e)=>a+e[1],0);
 function addIncome(cents,note){if(phase()!=="live")return;const before=levelOf(state.xp).level,xp=Math.round(cents/100*5),t0=earned();
   state.money.e.push([Date.now().toString(36),cents,note,Date.now(),xp]);state.xp+=xp;state.credits+=xp;state.area.wealth+=xp;
   move(Math.min(25,cents/200+2),"up",`Earned ${eur(cents)}`+(note?`: ${note}`:""));
   const t1=t0+cents;let big=false;
-  for(const[c,label,bx,pct]of MILES)if(t1>=c&&!state.money.hit[c]){state.money.hit[c]=1;state.xp+=bx;state.credits+=bx;move(pct,"mile",label);if(c===GOAL)big=true}
+  const first=t0===0;for(const[c,label,bx,pct]of MILES)if(t1>=c&&!state.money.hit[c]){state.money.hit[c]=1;state.xp+=bx;state.credits+=bx;move(pct,c===1?"jump":"mile",label);if(c===GOAL)big=true}
   const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
-  persist();closeModal();go("today");render();beep("buy");toast(`${eur(cents)} logged · +${xp} XP`);
-  if(big)overlay("Mission complete","€100","made online");else if(after>before)overlay("Level reached",after,rankOf(after)+" tier")}
+  persist();closeModal();go("today");render();
+  const fin=()=>{if(big)overlay("Mission complete","€100","made online");else if(after>before)overlay("Level reached",after,rankOf(after)+" tier")};
+  if(first)cinematic("first",{cents,note,pct:MILES[0][3],bonus:MILES[0][2]+xp},fin);else{beep("buy");toast(`${eur(cents)} logged · +${xp} XP`);fin()}}
 function removeIncome(id){const i=state.money.e.findIndex(e=>e[0]===id);if(i<0)return;const e=state.money.e[i];
   state.money.e.splice(i,1);state.xp=Math.max(0,state.xp-e[4]);state.credits-=e[4];state.area.wealth=Math.max(0,state.area.wealth-e[4]);
   const t=earned();for(const[c,,bx]of MILES)if(t<c&&state.money.hit[c]){delete state.money.hit[c];state.xp=Math.max(0,state.xp-bx);state.credits-=bx}
@@ -765,11 +805,11 @@ function logSession(id){const m=state.majors[id];if(!m||m.done)return;if(phase()
 function undoSession(id){const m=state.majors[id];if(!m||!m.ses.length||m.done)return;const e=m.ses.pop();state.xp=Math.max(0,state.xp-e[1]);state.credits-=e[1];state.area.mind=Math.max(0,state.area.mind-e[1]);
   move((1/1.01-1)*100,"undo",`${m.title}: removed a ${sesWord(m)}`);persist();closeModal();render();toast("Session removed")}
 function completeMajor(id){const m=state.majors[id];if(!m||m.done)return;const before=levelOf(state.xp).level;
-  m.done=Date.now();state.xp+=MAJ_XP;state.credits+=MAJ_XP;state.area.mind+=MAJ_XP;move(20,"mile",`Major mission complete: ${m.title}`);
+  m.done=Date.now();state.xp+=MAJ_XP;state.credits+=MAJ_XP;state.area.mind+=MAJ_XP;move(35,"jump",`Objective complete: ${m.title}`);
   const after=levelOf(state.xp).level;if(after>before)move(8,"mile",`Reached level ${after}`);
-  persist();closeModal();render();overlay("Major mission complete",m.title,`+${fmtN(MAJ_XP)} XP · +${fmtN(MAJ_XP)} credits`)}
+  persist();closeModal();render();cinematic("major",{title:m.title,kind:m.kind,pct:35},()=>{if(after>before)overlay("Level reached",after,rankOf(after)+" tier")})}
 function reopenMajor(id){const m=state.majors[id];if(!m||!m.done)return;m.done=null;state.xp=Math.max(0,state.xp-MAJ_XP);state.credits-=MAJ_XP;state.area.mind=Math.max(0,state.area.mind-MAJ_XP);
-  move((1/1.2-1)*100,"undo",`Reopened: ${m.title}`);persist();closeModal();render();toast("Mission reopened, reward taken back")}
+  move((1/1.35-1)*100,"undo",`Reopened: ${m.title}`);persist();closeModal();render();toast("Mission reopened, reward taken back")}
 function toggle(id){
   const d=ui.sel,t=state.tasks[id];if(!t)return;
   if(!inLock(d)){toast("Only lock-in days count.",true);return}
@@ -932,14 +972,14 @@ const pctTxt=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(2)+"%";
    Every event eases in over its own ramp, so several check-offs blend into one smooth climb.
    After 3 waking hours (07:00-23:00) without progress the price drifts down 0.2% an hour. */
 const HR=36e5,STEP=6e5,QUIET=3*HR,DRIFT=.002;
-const RAMP={up:4*HR,mile:3*HR,down:4*HR,undo:900e3,crash:1200e3};
+const RAMP={up:4*HR,mile:3*HR,down:4*HR,undo:900e3,crash:1200e3,jump:90e3};
 const ease=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
 const awake=ms=>{const h=new Date(ms).getHours();return h>=7&&h<23};
 let SER=null,serKey="";
 function buildSeries(){const L=pd(decStart()).getTime(),end=Math.min(Date.now(),pd(addD(decEnd(),1)).getTime()),key=state.updatedAt+"|"+state.stock.ev.length+"|"+Math.floor(end/6e4);
   if(SER&&serKey===key)return SER;serKey=key;
   if(end<=L)return SER={T:[L],P:[100],drift:{},ath:100,now:100,pending:0,quiet:0,L,end:L};
-  const E=state.stock.ev.filter(e=>e[0]>=L-HR).sort((a,b)=>a[0]-b[0]),act=E.filter(e=>e[2]==="up"||e[2]==="mile").map(e=>e[0]);
+  const E=state.stock.ev.filter(e=>e[0]>=L-HR).sort((a,b)=>a[0]-b[0]),act=E.filter(e=>e[2]==="up"||e[2]==="mile"||e[2]==="jump").map(e=>e[0]);
   const T=[],P=[],drift={},open=[],ln=Math.log(1-DRIFT);let done=1,ai=0,ei=0,last=L,hrs=0,ath=100,tp=L,f=1;
   for(let t=L;;t=Math.min(t+STEP,end)){
     while(ai<act.length&&act[ai]<=t)last=act[ai++];
@@ -977,7 +1017,7 @@ function renderMarket(){const ph=phase(),S=buildSeries(),now=S.end,p=S.now;
   const X=t=>(t-t0)/(now-t0)*(W-pr),Y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),col=up?"var(--up)":"var(--down)",hex=up?"#7cc4a0":"#e2806f";
   let d="";pts.forEach((q,k)=>{d+=(k?"L":"M")+X(q[0]).toFixed(1)+" "+Y(q[1]).toFixed(1)});
   let g="";for(let i=0;i<4;i++){const v=lo+padY+(hi-lo-2*padY)*i/3,y=Y(v).toFixed(1);g+=`<line x1="0" x2="${W-pr}" y1="${y}" y2="${y}" stroke="rgba(170,190,230,.06)"/><text x="${W-pr+12}" y="${+y+4}">${v.toFixed(2)}</text>`}
-  const marks=state.stock.ev.filter(e=>(e[2]==="mile"||e[2]==="crash")&&e[0]>=t0&&e[0]<=now).map(e=>{const te=Math.min(now,e[0]+RAMP[e[2]]);return `<circle cx="${X(te).toFixed(1)}" cy="${Y(valAt(S,te)).toFixed(1)}" r="3.5" fill="${e[2]==="mile"?"var(--gold)":"var(--down)"}" stroke="var(--bg)" stroke-width="2"/>`}).join("");
+  const marks=state.stock.ev.filter(e=>(e[2]==="mile"||e[2]==="crash"||e[2]==="jump")&&e[0]>=t0&&e[0]<=now).map(e=>{const te=Math.min(now,e[0]+RAMP[e[2]]);return `<circle cx="${X(te).toFixed(1)}" cy="${Y(valAt(S,te)).toFixed(1)}" r="3.5" fill="${e[2]==="crash"?"var(--down)":"var(--gold)"}" stroke="var(--bg)" stroke-width="2"${e[2]==="jump"?' r="5.5"':""}/>`}).join("");
   const sd=new Date(t0);
   host.innerHTML=`<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="mkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hex}" stop-opacity=".18"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></linearGradient></defs>
     ${g}<path d="${d}L${X(now).toFixed(1)} ${H-pb}L0 ${H-pb}Z" fill="url(#mkG)"/><path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>${marks}
@@ -1047,6 +1087,50 @@ function slipPreview(){const el=$("slipPrev");if(!el)return;const n=Math.max(0,M
   const lost=Math.min(n,state.xp),pct=crashPct(n),np=Math.max(1,curP()*(1-pct/100)),lv=levelOf(state.xp).level,nl=levelOf(state.xp-lost).level;
   el.textContent=`−${lost} XP${lost<n?" (all you have)":""} · $LOCK ${curP().toFixed(2)} → ${np.toFixed(2)} (−${pct}%)`+(nl<lv?` · level ${lv} → ${nl}`:"")}
 function confirmReset(){$("modalHost").innerHTML=`<div class="modal" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="Reset progress"><div class="sb"><h3>Reset all progress?</h3><p>This erases your income log, level, credits, missions, stock history and collection on every synced device. It can't be undone.</p><div class="acts"><button class="btn danger fill" type="button" data-reset>Erase everything</button><button class="btn ghost" type="button" data-close>Keep my progress</button></div></div></div></div>`}
+/* ---------- moments ---------- */
+function sparks(cv){const c=cv.getContext("2d"),d=Math.min(2,window.devicePixelRatio||1),P=[],cols=["#ecd59f","#d4b26a","#fff4d8","#b8903f","#f7e2ad"];let W=0,H=0;
+  const fit=()=>{W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)};fit();
+  const add=o=>P.push(Object.assign({r:1+Math.random()*2.4,l:1,dl:.006+Math.random()*.008,g:.06,dr:.985,ph:Math.random()*6,c:cols[Math.random()*cols.length|0]},o));
+  const api={burst(n,x,y,sp){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=sp*(.3+Math.random());add({x:x*W,y:y*H,vx:Math.cos(a)*v,vy:Math.sin(a)*v-sp*.25})}},
+    rain(n){for(let i=0;i<n;i++)add({x:Math.random()*W,y:-20-Math.random()*H*.6,vx:(Math.random()-.5)*.6,vy:1+Math.random()*2,g:.01,dr:.995,dl:.002+Math.random()*.003,tw:1})},
+    fountain(n,x,y){for(let i=0;i<n;i++){const a=-Math.PI/2+(Math.random()-.5)*.9,v=8+Math.random()*9;add({x:x*W,y:y*H,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.22,dl:.008})}}};
+  const t0=performance.now();(function loop(){if(!cv.isConnected)return;c.clearRect(0,0,W,H);c.globalCompositeOperation="lighter";
+    for(let i=P.length-1;i>=0;i--){const p=P[i];p.vx*=p.dr;p.vy=p.vy*p.dr+p.g;p.x+=p.vx;p.y+=p.vy;p.l-=p.dl;if(p.l<=0||p.y>H+40){P.splice(i,1);continue}
+      const tw=p.tw?.55+.45*Math.sin((performance.now()-t0)/120+p.ph):1;c.globalAlpha=Math.max(0,Math.min(1,p.l*1.4));c.fillStyle=p.c;c.beginPath();c.arc(p.x,p.y,p.r*tw,0,6.283);c.fill()}
+    requestAnimationFrame(loop)})();
+  return api}
+function typeOut(el,txt,at,speed){setTimeout(()=>{let i=0;const iv=setInterval(()=>{el.textContent=txt.slice(0,++i);if(i>=txt.length){clearInterval(iv);setTimeout(()=>el.classList.add("done"),600)}},speed||38)},at)}
+function countPct(el,to,at,ms){setTimeout(()=>{const t0=performance.now(),st=n=>{if(!el.isConnected)return;const k=Math.min(1,(n-t0)/ms),e=1-Math.pow(1-k,4);el.textContent="+"+(to*e).toFixed(2)+"%";if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)},at)}
+function cinematic(kind,o,after){const el=document.createElement("div");el.className="cine";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");
+  const dayN=phase()==="live"?pd(today()).getDate():null,spark='<svg viewBox="0 0 90 30"><path d="M2 26 C 20 25, 30 24, 40 20 S 60 12, 66 6 S 80 3, 88 2"/></svg>';
+  if(kind==="first"){el.setAttribute("aria-label","First money made online");
+    el.innerHTML=`<canvas></canvas><div class="cine-in"><div class="ty" id="cTy"></div>
+      <div class="coin"><svg viewBox="0 0 200 200"><defs><radialGradient id="cgr" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#fff2cc"/><stop offset=".45" stop-color="#e6c57e"/><stop offset="1" stop-color="#a77d32"/></radialGradient></defs>
+        <circle class="cf" cx="100" cy="100" r="84" fill="url(#cgr)"/><circle class="cr" cx="100" cy="100" r="86"/><circle class="cr2" cx="100" cy="100" r="72"/><text x="100" y="126" text-anchor="middle">€</text></svg></div>
+      <h2 class="lt" style="animation-delay:3.1s">The internet <em>paid you.</em></h2>
+      <p class="lt" style="animation-delay:3.7s">${eur(o.cents)}${o.note?` from ${esc(o.note)}`:""}. The first money you've ever made online${dayN?`, on day ${dayN} of the lock-in`:""}. Everything after this is just more of it.</p>
+      <div class="tk lt" id="cTk" style="animation-delay:4.4s"><span>$LOCK</span><b id="cPct">+0.00%</b>${spark}</div>
+      <p class="lt" style="animation-delay:5s;font-size:13px;color:var(--gold-2)">+${fmtN(o.bonus)} XP · first money bonus</p>
+      <button class="btn cont" type="button" style="animation-delay:5.6s">Keep going</button></div>`}
+  else{el.setAttribute("aria-label",o.title+" complete");const chars=[...o.title].map((ch,i)=>`<span style="--i:${i}">${ch===" "?"&nbsp;":esc(ch)}</span>`).join("");
+    el.innerHTML=`<canvas></canvas><div class="sw b"></div><div class="sw a"></div><div class="ring"></div><div class="ring r2"></div><div class="cine-in">
+      <div class="ty" id="cTy"></div><h2 class="chars">${chars}</h2>
+      <p class="lt" style="animation-delay:${1.6+o.title.length*.055}s">${o.kind==="study"?"Every hour at the desk, cashed in.":"Every hour at the keys, cashed in."} Objective complete${dayN?` on day ${dayN}`:""}.</p>
+      <div class="tk lt" id="cTk" style="animation-delay:2.6s"><span>$LOCK</span><b id="cPct">+0.00%</b>${spark}</div>
+      <p class="lt" style="animation-delay:3.1s;font-size:13px;color:var(--gold-2)">+${fmtN(MAJ_XP)} XP · +${fmtN(MAJ_XP)} credits</p>
+      <button class="btn cont" type="button" style="animation-delay:3.6s">Continue</button></div>`}
+  document.body.appendChild(el);
+  const close=()=>{if(el.classList.contains("out"))return;el.classList.add("out");document.removeEventListener("keydown",key);setTimeout(()=>{el.remove();if(after)after()},440)},key=e=>{if(e.key==="Escape"||e.key==="Enter")close()};
+  el.querySelector(".cont").addEventListener("click",close);document.addEventListener("keydown",key);
+  const tk=$("cTk"),pc=$("cPct");
+  if(still){$("cTy").textContent=kind==="first"?"Payment received":"Objective complete";pc.textContent="+"+o.pct.toFixed(2)+"%";tk.classList.add("go");return}
+  const fx=sparks(el.querySelector("canvas"));
+  if(kind==="first"){beep("first");typeOut($("cTy"),"Incoming payment… received",150,45);
+    setTimeout(()=>fx.burst(260,.5,.36,11),2300);setTimeout(()=>fx.fountain(140,.5,1.02),3000);setTimeout(()=>fx.rain(160),3400);
+    setTimeout(()=>{tk.classList.add("go")},4700);countPct(pc,o.pct,4700,1800)}
+  else{beep("major");typeOut($("cTy"),"Objective complete",250,55);
+    setTimeout(()=>fx.burst(180,.5,.46,9),1100);setTimeout(()=>fx.rain(120),1700);
+    setTimeout(()=>{tk.classList.add("go")},2900);countPct(pc,o.pct,2900,1500)}}
 function overlay(label,big,sub){beep("level");const el=document.createElement("div");el.className="over";el.innerHTML=`<div><span class="cap">${esc(label)}</span><b class="num">${esc(big)}</b><span>${esc(sub)}</span></div>`;
   document.body.appendChild(el);const kill=()=>el.remove();el.addEventListener("click",kill);setTimeout(kill,3400)}
 function toast(msg,bad){const el=document.createElement("div");el.className="toast"+(bad?" bad":"");el.textContent=msg;$("toasts").appendChild(el);setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),320)},bad?3400:1800)}
@@ -1054,7 +1138,7 @@ function toast(msg,bad){const el=document.createElement("div");el.className="toa
 /* soft tones */
 let actx=null;
 function beep(kind){if(!ui.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-  const seq={ok:[[784,0],[1175,.08]],undo:[[392,0]],level:[[523,0],[659,.12],[784,.24],[1047,.36]],buy:[[587,0],[880,.1],[1175,.2]],crash:[[330,0],[247,.12],[165,.26]]}[kind]||[];
+  const seq={ok:[[784,0],[1175,.08]],undo:[[392,0]],level:[[523,0],[659,.12],[784,.24],[1047,.36]],buy:[[587,0],[880,.1],[1175,.2]],crash:[[330,0],[247,.12],[165,.26]],first:[[392,0],[523,.14],[659,.28],[784,.42],[1047,.56],[1319,.74],[1568,.92],[2093,1.15]],major:[[262,0],[392,.1],[523,.2],[659,.32],[784,.44],[1047,.6]]}[kind]||[];
   for(const[f,at]of seq){const o=actx.createOscillator(),g=actx.createGain(),t=actx.currentTime+at;o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.08,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.5);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.55)}}catch(e){}}
 function renderSound(){$("sndBtn").textContent=ui.sound?"Sound on":"Sound off"}
 
